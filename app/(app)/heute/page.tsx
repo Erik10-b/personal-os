@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardData } from "@/lib/services/dashboard";
+import { getRecentActivity } from "@/lib/services/activity";
 import { toggleHabitLog } from "@/lib/actions/habits";
 import { toggleTodo } from "@/lib/actions/todos";
 import { EmptyState } from "@/components/ui/Card";
+import { ActivityFeed } from "@/components/activity/ActivityFeed";
 
 function greeting(hour: number): string {
   if (hour < 5) return "Gute Nacht";
@@ -22,7 +24,7 @@ function formatEuro(cents: number) {
 }
 
 export default async function HeutePage() {
-  const data = await getDashboardData();
+  const [data, activity] = await Promise.all([getDashboardData(), getRecentActivity(8)]);
   const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
   const name = (userData.user?.email ?? "").split("@")[0];
@@ -203,6 +205,16 @@ export default async function HeutePage() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Letzte Aktivität */}
+        <div>
+          <h3 className="chart-title" style={{ marginBottom: "var(--space-3)" }}>
+            Letzte Aktivität
+          </h3>
+          <div className="card">
+            <ActivityFeed items={activity} />
           </div>
         </div>
       </div>
