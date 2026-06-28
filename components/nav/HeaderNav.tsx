@@ -1,0 +1,48 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { MODULES } from "@/lib/modules";
+import { signOut } from "@/lib/actions/auth";
+
+export function HeaderNav({ userInitials }: { userInitials: string }) {
+  const pathname = usePathname();
+
+  return (
+    <header className="app-header">
+      <div className="header-inner">
+        <Link href="/erik" className="brand">
+          <div className="brand-mark">P</div>
+          <div className="brand-block">
+            <span className="brand-name">Personal OS</span>
+            <span className="brand-meta">PRIVAT</span>
+          </div>
+        </Link>
+
+        <nav className="header-tabs">
+          {MODULES.map((mod) => {
+            const active = pathname.startsWith(mod.href);
+            return (
+              <Link
+                key={mod.key}
+                href={mod.href}
+                className={`header-tab ${active ? "active" : ""}`}
+                style={{ "--tab-color": `var(${mod.colorVar})` } as React.CSSProperties}
+              >
+                {mod.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="header-spacer" />
+
+        <form action={signOut}>
+          <button className="user-pin" type="submit" title="Abmelden">
+            {userInitials}
+          </button>
+        </form>
+      </div>
+    </header>
+  );
+}
