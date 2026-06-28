@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MODULES } from "@/lib/modules";
+import { NAV_ITEMS } from "@/lib/modules";
 import { signOut } from "@/lib/actions/auth";
 
 export function HeaderNav({ userInitials }: { userInitials: string }) {
@@ -11,7 +11,7 @@ export function HeaderNav({ userInitials }: { userInitials: string }) {
   return (
     <header className="app-header">
       <div className="header-inner">
-        <Link href="/erik" className="brand">
+        <Link href="/heute" className="brand">
           <div className="brand-mark">P</div>
           <div className="brand-block">
             <span className="brand-name">Personal OS</span>
@@ -20,7 +20,7 @@ export function HeaderNav({ userInitials }: { userInitials: string }) {
         </Link>
 
         <nav className="header-tabs">
-          {MODULES.map((mod) => {
+          {NAV_ITEMS.map((mod) => {
             const active = pathname.startsWith(mod.href);
             return (
               <Link

@@ -34,6 +34,7 @@ export async function toggleTodo(formData: FormData) {
   const { error } = await supabase.from("todos").update({ done: !done }).eq("id", id);
   if (error) throw error;
   revalidatePath(pathForArea(area));
+  revalidatePath("/heute");
 }
 
 export async function deleteTodo(formData: FormData) {

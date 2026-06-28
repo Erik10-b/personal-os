@@ -8,6 +8,12 @@ const common = {
 };
 
 export const MODULE_ICONS: Record<string, React.ReactElement> = {
+  heute: (
+    <svg {...common}>
+      <path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0Z" />
+      <path d="M12 7v5l3 2" />
+    </svg>
+  ),
   finanzielles: (
     <svg {...common}>
       <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />

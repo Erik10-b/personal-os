@@ -45,6 +45,7 @@ export async function toggleHabitLog(formData: FormData) {
 
   revalidatePath("/erik/habits");
   revalidatePath("/erik");
+  revalidatePath("/heute");
 }
 
 export async function archiveHabit(formData: FormData) {

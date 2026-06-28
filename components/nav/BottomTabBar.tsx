@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MODULES } from "@/lib/modules";
+import { NAV_ITEMS } from "@/lib/modules";
 import { MODULE_ICONS } from "./icons";
 
 export function BottomTabBar() {
@@ -10,7 +10,7 @@ export function BottomTabBar() {
 
   return (
     <nav className="bottom-bar">
-      {MODULES.map((mod) => {
+      {NAV_ITEMS.map((mod) => {
         const active = pathname.startsWith(mod.href);
         return (
           <Link
@@ -20,7 +20,7 @@ export function BottomTabBar() {
             style={{ "--tab-color": `var(${mod.colorVar})` } as React.CSSProperties}
           >
             {MODULE_ICONS[mod.key]}
-            <span>{mod.label}</span>
+            <span>{mod.short}</span>
           </Link>
         );
       })}
