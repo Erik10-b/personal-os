@@ -2,6 +2,7 @@ export type EventArea = "allgemein" | "fussball";
 export type TodoArea = "erik" | "arbeit";
 export type TransactionType = "income" | "expense";
 export type TodoUrgency = "today" | "this_week" | "this_month" | "someday";
+export type TodoPriority = "high" | "medium" | "low";
 export type GoalScope = "week" | "month";
 
 export interface EventRow {
@@ -26,6 +27,7 @@ export interface TodoRow {
   done: boolean;
   due_date: string | null;
   urgency: TodoUrgency;
+  priority: TodoPriority;
   key: boolean;
   created_at: string;
   updated_at: string;

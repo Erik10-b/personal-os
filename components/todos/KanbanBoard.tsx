@@ -1,8 +1,8 @@
 "use client";
 
 import { TodoArea, TodoRow } from "@/lib/types";
-import { createTodo, deleteTodo, setTodoUrgency, toggleTodo } from "@/lib/actions/todos";
-import { URGENCY_TIERS, groupByUrgency } from "@/lib/todoUtils";
+import { createTodo, deleteTodo, setTodoPriority, setTodoUrgency, toggleTodo } from "@/lib/actions/todos";
+import { PRIORITY_LEVELS, PRIORITY_META, URGENCY_TIERS, groupByUrgency } from "@/lib/todoUtils";
 import { EmptyState } from "@/components/ui/Card";
 
 function isOverdue(dueDate: string | null) {
@@ -32,6 +32,16 @@ export function KanbanBoard({ area, todos }: { area: TodoArea; todos: TodoRow[] 
             {URGENCY_TIERS.map((tier) => (
               <option key={tier.key} value={tier.key}>
                 {tier.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="form-row">
+          <label htmlFor="kanban-priority">Priorität</label>
+          <select className="input" id="kanban-priority" name="priority" defaultValue="medium">
+            {PRIORITY_LEVELS.map((p) => (
+              <option key={p} value={p}>
+                {PRIORITY_META[p].label}
               </option>
             ))}
           </select>
@@ -84,6 +94,9 @@ export function KanbanBoard({ area, todos }: { area: TodoArea; todos: TodoRow[] 
                         {todo.key && <span title="Schlüsselaufgabe">⭐ </span>}
                         {todo.title}
                       </span>
+                      <span className={`badge ${PRIORITY_META[todo.priority ?? "medium"].badge}`} title="Priorität">
+                        {PRIORITY_META[todo.priority ?? "medium"].label}
+                      </span>
                       <form action={deleteTodo}>
                         <input type="hidden" name="id" value={todo.id} />
                         <input type="hidden" name="area" value={area} />
@@ -112,6 +125,24 @@ export function KanbanBoard({ area, todos }: { area: TodoArea; todos: TodoRow[] 
                           {URGENCY_TIERS.map((tier) => (
                             <option key={tier.key} value={tier.key}>
                               {tier.label}
+                            </option>
+                          ))}
+                        </select>
+                      </form>
+                      <form action={setTodoPriority}>
+                        <input type="hidden" name="id" value={todo.id} />
+                        <input type="hidden" name="area" value={area} />
+                        <select
+                          className="input mono"
+                          name="priority"
+                          defaultValue={todo.priority ?? "medium"}
+                          style={{ fontSize: 10, padding: "4px 8px" }}
+                          onChange={(e) => e.currentTarget.form?.requestSubmit()}
+                          title="Priorität ändern"
+                        >
+                          {PRIORITY_LEVELS.map((p) => (
+                            <option key={p} value={p}>
+                              {PRIORITY_META[p].label}
                             </option>
                           ))}
                         </select>
