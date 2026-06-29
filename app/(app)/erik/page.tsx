@@ -53,9 +53,9 @@ export default async function ErikPage() {
       {habits.length === 0 ? (
         <EmptyState>Noch keine Habits angelegt.</EmptyState>
       ) : (
-        <div className="card-list">
+        <div className="module-grid">
           {habits.map((habit) => (
-            <HabitCard key={habit.id} habit={habit} />
+            <HabitCard key={habit.id} habit={habit} compact />
           ))}
         </div>
       )}
