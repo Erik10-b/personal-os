@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { getDashboardData } from "@/lib/services/dashboard";
 import { getRecentActivity } from "@/lib/services/activity";
 import { getNetWorthSnapshots } from "@/lib/services/netWorth";
@@ -36,9 +35,7 @@ export default async function HeutePage() {
     getGoals("week"),
     getMealsForDate(todayStr0),
   ]);
-  const supabase = await createClient();
-  const { data: userData } = await supabase.auth.getUser();
-  const name = (userData.user?.email ?? "").split("@")[0];
+  const name = "Erik";
 
   const now = new Date();
   const dateLabel = now.toLocaleDateString("de-DE", {
