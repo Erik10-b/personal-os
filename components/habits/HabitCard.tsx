@@ -27,6 +27,11 @@ export function HabitCard({ habit }: { habit: HabitWithLogs }) {
   const logDates = new Set(habit.logs.map((l) => l.log_date));
   const streak = computeStreak(logDates);
 
+  const today = days[days.length - 1];
+  const yesterday = days[days.length - 2];
+  const todayChecked = logDates.has(today);
+  const yesterdayChecked = logDates.has(yesterday);
+
   return (
     <div className="card">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-3)" }}>
@@ -40,6 +45,25 @@ export function HabitCard({ habit }: { habit: HabitWithLogs }) {
           <input type="hidden" name="id" value={habit.id} />
           <button type="submit" className="btn ghost sm">
             Archivieren
+          </button>
+        </form>
+      </div>
+
+      <div style={{ display: "flex", gap: "var(--space-2)", marginBottom: "var(--space-4)" }}>
+        <form action={toggleHabitLog} style={{ flex: 1 }}>
+          <input type="hidden" name="habit_id" value={habit.id} />
+          <input type="hidden" name="log_date" value={yesterday} />
+          <input type="hidden" name="checked" value={String(yesterdayChecked)} />
+          <button type="submit" className={`btn sm block ${yesterdayChecked ? "primary" : "secondary"}`}>
+            {yesterdayChecked ? "✓ " : ""}Gestern
+          </button>
+        </form>
+        <form action={toggleHabitLog} style={{ flex: 1 }}>
+          <input type="hidden" name="habit_id" value={habit.id} />
+          <input type="hidden" name="log_date" value={today} />
+          <input type="hidden" name="checked" value={String(todayChecked)} />
+          <button type="submit" className={`btn sm block ${todayChecked ? "primary" : "secondary"}`}>
+            {todayChecked ? "✓ " : ""}Heute
           </button>
         </form>
       </div>
