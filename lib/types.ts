@@ -1,6 +1,8 @@
 export type EventArea = "allgemein" | "fussball";
 export type TodoArea = "erik" | "arbeit";
 export type TransactionType = "income" | "expense";
+export type TodoUrgency = "today" | "this_week" | "this_month" | "someday";
+export type GoalScope = "week" | "month";
 
 export interface EventRow {
   id: string;
@@ -23,8 +25,40 @@ export interface TodoRow {
   title: string;
   done: boolean;
   due_date: string | null;
+  urgency: TodoUrgency;
+  key: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface GoalRow {
+  id: string;
+  user_id: string;
+  scope: GoalScope;
+  title: string;
+  done: boolean;
+  created_at: string;
+}
+
+export interface MealRow {
+  id: string;
+  user_id: string;
+  eaten_on: string;
+  name: string;
+  kcal: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  created_at: string;
+}
+
+export interface NetWorthSnapshotRow {
+  id: string;
+  user_id: string;
+  snapshot_date: string;
+  amount: number;
+  note: string | null;
+  created_at: string;
 }
 
 export interface TransactionRow {

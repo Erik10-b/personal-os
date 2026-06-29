@@ -2,17 +2,20 @@ import Link from "next/link";
 import { getHabitsWithLogs } from "@/lib/services/habits";
 import { getWeightLogs } from "@/lib/services/weight";
 import { getTodos } from "@/lib/services/todos";
+import { getGoals } from "@/lib/services/goals";
 
 export default async function ErikPage() {
-  const [habits, weightLogs, todos] = await Promise.all([
+  const [habits, weightLogs, todos, weekGoals] = await Promise.all([
     getHabitsWithLogs(),
     getWeightLogs(7),
     getTodos("erik"),
+    getGoals("week"),
   ]);
 
   const openTodos = todos.filter((t) => !t.done).length;
   const latestWeight = weightLogs[weightLogs.length - 1];
   const activeHabits = habits.length;
+  const openGoals = weekGoals.filter((g) => !g.done).length;
 
   return (
     <>
@@ -39,6 +42,16 @@ export default async function ErikPage() {
         <Link href="/erik/todos" className="module-card" style={{ "--module-color": "var(--mod-erik)" } as React.CSSProperties}>
           <div className="module-name">To-Do&apos;s</div>
           <div className="module-desc">{openTodos} offen</div>
+        </Link>
+
+        <Link href="/erik/goals" className="module-card" style={{ "--module-color": "var(--mod-erik)" } as React.CSSProperties}>
+          <div className="module-name">Ziele</div>
+          <div className="module-desc">{openGoals} offen diese Woche</div>
+        </Link>
+
+        <Link href="/erik/ernaehrung" className="module-card" style={{ "--module-color": "var(--mod-erik)" } as React.CSSProperties}>
+          <div className="module-name">Ernährung</div>
+          <div className="module-desc">Mahlzeiten & Makros</div>
         </Link>
       </div>
     </>

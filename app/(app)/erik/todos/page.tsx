@@ -1,5 +1,5 @@
 import { getTodos } from "@/lib/services/todos";
-import { TodoList } from "@/components/todos/TodoList";
+import { KanbanBoard } from "@/components/todos/KanbanBoard";
 
 export default async function ErikTodosPage() {
   const todos = await getTodos("erik");
@@ -9,10 +9,10 @@ export default async function ErikTodosPage() {
       <div className="page-head">
         <div>
           <h1>To-Do&apos;s</h1>
-          <p>Persönliche Aufgaben.</p>
+          <p>Persönliche Aufgaben nach Dringlichkeit sortiert.</p>
         </div>
       </div>
-      <TodoList area="erik" todos={todos} />
+      <KanbanBoard area="erik" todos={todos} />
     </>
   );
 }
