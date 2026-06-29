@@ -14,10 +14,12 @@ function toLocalInputValue(iso: string | null): string {
 export function EventForm({
   area,
   event,
+  defaultDate,
   onClose,
 }: {
   area: EventArea;
   event?: EventRow;
+  defaultDate?: string;
   onClose: () => void;
 }) {
   const isEdit = Boolean(event);
@@ -87,7 +89,7 @@ export function EventForm({
             name="starts_at"
             type="datetime-local"
             required
-            defaultValue={toLocalInputValue(event?.starts_at ?? null)}
+            defaultValue={toLocalInputValue(event?.starts_at ?? null) || (defaultDate ? `${defaultDate}T09:00` : "")}
           />
         </div>
 
