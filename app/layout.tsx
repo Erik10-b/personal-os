@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Outfit, IBM_Plex_Mono } from "next/font/google";
+import { Outfit, Inconsolata } from "next/font/google";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -8,9 +8,9 @@ const outfit = Outfit({
   variable: "--font-sans",
 });
 
-const plexMono = IBM_Plex_Mono({
+const inconsolata = Inconsolata({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
   variable: "--font-mono",
 });
@@ -26,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="de" data-theme="dark" className={`${outfit.variable} ${plexMono.variable}`}>
+    <html lang="de" data-theme="dark" className={`${outfit.variable} ${inconsolata.variable}`}>
       <body>{children}</body>
     </html>
   );
