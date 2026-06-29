@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS } from "@/lib/modules";
 import { signOut } from "@/lib/actions/auth";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function HeaderNav({ userInitials }: { userInitials: string }) {
   const pathname = usePathname();
@@ -36,6 +37,8 @@ export function HeaderNav({ userInitials }: { userInitials: string }) {
         </nav>
 
         <div className="header-spacer" />
+
+        <ThemeToggle />
 
         <form action={signOut}>
           <button className="user-pin" type="submit" title="Abmelden">
