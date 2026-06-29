@@ -20,6 +20,8 @@ export function HeaderNav({ userInitials }: { userInitials: string }) {
           </div>
         </Link>
 
+        <div className="header-spacer" />
+
         <nav className="header-tabs">
           {NAV_ITEMS.map((mod) => {
             const active = pathname.startsWith(mod.href);
