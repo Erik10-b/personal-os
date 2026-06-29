@@ -11,6 +11,7 @@ import {
 export interface DashboardData {
   todayEvents: EventRow[];
   dueTodos: TodoRow[];
+  keyTodos: TodoRow[];
   habits: { habit: HabitRow; doneToday: boolean }[];
   latestWeight: WeightLogRow | null;
   month: { income: number; expense: number; balance: number };
@@ -33,7 +34,7 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const [eventsRes, todosRes, habitsRes, habitLogsRes, weightRes, txRes] =
+  const [eventsRes, todosRes, keyTodosRes, habitsRes, habitLogsRes, weightRes, txRes] =
     await Promise.all([
       supabase
         .from("events")
@@ -48,6 +49,12 @@ export async function getDashboardData(): Promise<DashboardData> {
         .not("due_date", "is", null)
         .lte("due_date", todayStr)
         .order("due_date", { ascending: true }),
+      supabase
+        .from("todos")
+        .select("*")
+        .eq("done", false)
+        .eq("key", true)
+        .order("due_date", { ascending: true, nullsFirst: false }),
       supabase
         .from("habits")
         .select("*")
@@ -73,6 +80,7 @@ export async function getDashboardData(): Promise<DashboardData> {
   return {
     todayEvents: (eventsRes.data ?? []) as EventRow[],
     dueTodos: (todosRes.data ?? []) as TodoRow[],
+    keyTodos: (keyTodosRes.data ?? []) as TodoRow[],
     habits: habits.map((habit) => ({
       habit,
       doneToday: doneHabitIds.has(habit.id),

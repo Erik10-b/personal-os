@@ -391,6 +391,11 @@ main { min-width: 0; }
 .heat-cell.h1 { background: color-mix(in srgb, var(--club) 25%, var(--bg-surface-3)); }
 .heat-cell.h4 { background: var(--club); box-shadow: 0 0 6px var(--club-glow); }
 
+/* Heute-Dashboard: links schmal, Mitte breit, rechts schmal (3-Spalten-Operator-Layout) */
+.dashboard-grid { display: grid; gap: var(--space-6); grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr); align-items: start; }
+.dashboard-col { display: flex; flex-direction: column; gap: var(--space-6); min-width: 0; }
+@media (max-width: 1000px) { .dashboard-grid { grid-template-columns: 1fr; } }
+
 /* Module cards (Dashboard / Übersicht) */
 .module-grid { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
 .module-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); padding: var(--space-6); transition: all var(--duration-base) var(--ease); position: relative; overflow: hidden; display: block; }
