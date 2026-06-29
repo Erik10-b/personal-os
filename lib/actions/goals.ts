@@ -18,6 +18,8 @@ export async function createGoal(formData: FormData) {
 
   if (error) throw error;
   revalidatePath("/erik/goals");
+  revalidatePath("/erik");
+  revalidatePath("/heute");
 }
 
 export async function toggleGoal(formData: FormData) {
@@ -28,6 +30,8 @@ export async function toggleGoal(formData: FormData) {
   const { error } = await supabase.from("goals").update({ done: !done }).eq("id", id);
   if (error) throw error;
   revalidatePath("/erik/goals");
+  revalidatePath("/erik");
+  revalidatePath("/heute");
 }
 
 export async function deleteGoal(formData: FormData) {
@@ -37,4 +41,6 @@ export async function deleteGoal(formData: FormData) {
   const { error } = await supabase.from("goals").delete().eq("id", id);
   if (error) throw error;
   revalidatePath("/erik/goals");
+  revalidatePath("/erik");
+  revalidatePath("/heute");
 }

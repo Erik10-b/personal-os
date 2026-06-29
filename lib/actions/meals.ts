@@ -25,6 +25,8 @@ export async function createMeal(formData: FormData) {
 
   if (error) throw error;
   revalidatePath("/erik/ernaehrung");
+  revalidatePath("/erik");
+  revalidatePath("/heute");
 }
 
 export async function deleteMeal(formData: FormData) {
@@ -34,4 +36,6 @@ export async function deleteMeal(formData: FormData) {
   const { error } = await supabase.from("meals").delete().eq("id", id);
   if (error) throw error;
   revalidatePath("/erik/ernaehrung");
+  revalidatePath("/erik");
+  revalidatePath("/heute");
 }
