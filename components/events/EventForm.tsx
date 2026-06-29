@@ -106,13 +106,13 @@ export function EventForm({
 
         <div className="form-row">
           <label htmlFor="category">Kategorie</label>
-          <input
-            className="input"
-            id="category"
-            name="category"
-            defaultValue={event?.category ?? ""}
-            placeholder={area === "fussball" ? "Training / Spiel" : "z.B. Arzt, Privat"}
-          />
+          <select className="input" id="category" name="category" defaultValue={event?.category ?? "Persönlich"}>
+            <option value="Persönlich">Persönlich</option>
+            <option value="Arbeit">Arbeit</option>
+            <option value="Uni">Uni</option>
+            <option value="Event">Event</option>
+            <option value="Fußball">Fußball</option>
+          </select>
         </div>
 
         <div className="form-row">

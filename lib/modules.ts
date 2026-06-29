@@ -11,7 +11,6 @@ export const MODULES: ModuleDef[] = [
   { key: "erik", label: "Erik", short: "Erik", href: "/erik", colorVar: "--mod-erik" },
   { key: "termine", label: "Termine", short: "Termine", href: "/termine", colorVar: "--mod-termine" },
   { key: "arbeit", label: "Arbeit/Master", short: "Arbeit", href: "/arbeit", colorVar: "--mod-arbeit" },
-  { key: "fussball", label: "Fußball", short: "Fußball", href: "/fussball", colorVar: "--mod-fussball" },
 ];
 
 export const HEUTE: ModuleDef = {

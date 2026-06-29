@@ -15,9 +15,10 @@ function toDateKey(d: Date) {
 
 function pillClassFor(event: EventRow): string {
   const cat = (event.category ?? "").toLowerCase();
-  if (cat.includes("geburtstag")) return "geburtstag";
-  if (cat.includes("training")) return "training";
-  if (cat.includes("spiel")) return "spiel";
+  if (cat.includes("fußball") || cat.includes("fussball")) return "spiel";
+  if (cat.includes("uni")) return "training";
+  if (cat.includes("persönlich") || cat.includes("persoenlich")) return "geburtstag";
+  if (cat.includes("arbeit")) return "event";
   return "event";
 }
 
