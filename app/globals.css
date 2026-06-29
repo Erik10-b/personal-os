@@ -1,6 +1,8 @@
 :root {
-  /* --font-sans (Outfit) und --font-mono (JetBrains Mono) werden über
-     next/font in app/layout.tsx self-hosted und als CSS-Variablen gesetzt. */
+  /* --font-sans (Outfit) wird über next/font in app/layout.tsx self-hosted
+     und als CSS-Variable gesetzt. Kabinski nutzt für alle Texte – auch
+     Zahlen – durchgängig Outfit, daher zeigt --font-mono ebenfalls darauf. */
+  --font-mono: var(--font-sans);
 
   --radius-xs: 4px; --radius-sm: 6px; --radius-md: 10px;
   --radius-lg: 14px; --radius-xl: 20px; --radius-2xl: 28px; --radius-full: 9999px;

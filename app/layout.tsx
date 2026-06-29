@@ -1,18 +1,11 @@
 import type { Metadata } from "next";
-import { Outfit, Inconsolata } from "next/font/google";
+import { Outfit } from "next/font/google";
 import "./globals.css";
 
 const outfit = Outfit({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-sans",
-});
-
-const inconsolata = Inconsolata({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  variable: "--font-mono",
 });
 
 export const metadata: Metadata = {
@@ -26,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="de" data-theme="dark" className={`${outfit.variable} ${inconsolata.variable}`}>
+    <html lang="de" data-theme="dark" className={outfit.variable}>
       <body>{children}</body>
     </html>
   );
