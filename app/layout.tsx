@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Outfit, JetBrains_Mono } from "next/font/google";
+import { Outfit, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -8,8 +8,9 @@ const outfit = Outfit({
   variable: "--font-sans",
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
   display: "swap",
   variable: "--font-mono",
 });
@@ -25,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="de" data-theme="dark" className={`${outfit.variable} ${jetbrainsMono.variable}`}>
+    <html lang="de" data-theme="dark" className={`${outfit.variable} ${plexMono.variable}`}>
       <body>{children}</body>
     </html>
   );
