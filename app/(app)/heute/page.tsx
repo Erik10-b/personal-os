@@ -9,6 +9,7 @@ import { toggleTodo } from "@/lib/actions/todos";
 import { toggleGoal } from "@/lib/actions/goals";
 import { EmptyState } from "@/components/ui/Card";
 import { ActivityFeed } from "@/components/activity/ActivityFeed";
+import { HeroBanner } from "@/components/dashboard/HeroBanner";
 
 function greeting(hour: number): string {
   if (hour < 5) return "Gute Nacht";
@@ -51,17 +52,16 @@ export default async function HeutePage() {
   const mealTotals = sumMacros(todayMeals);
   const openWeekGoals = weekGoals.filter((g) => !g.done);
 
+  const summaryLine = `${data.todayEvents.length} Termine · ${data.dueTodos.length} fällig · ${data.habits.length - openHabits}/${data.habits.length} Habits`;
+
   return (
     <>
-      <div className="page-head">
-        <div>
-          <h1 style={{ textTransform: "capitalize" }}>
-            {greeting(now.getHours())}
-            {name ? `, ${name}` : ""}
-          </h1>
-          <p style={{ textTransform: "capitalize" }}>{dateLabel}</p>
-        </div>
-      </div>
+      <HeroBanner
+        greeting={greeting(now.getHours())}
+        name={name}
+        dateLabel={dateLabel}
+        summary={summaryLine}
+      />
 
       <div className="dashboard-grid">
         {/* Linke Spalte: Operator, Finance Pulse, Key Blockers */}

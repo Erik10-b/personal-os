@@ -405,6 +405,60 @@ main { min-width: 0; }
 .module-name { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
 .module-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.55; }
 
+/* Hero-Banner (Heute) · optionales Hintergrundbild /hero.jpg, sonst Verlauf */
+.hero-banner {
+  position: relative; overflow: hidden;
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--border-subtle);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  display: flex; align-items: center; gap: var(--space-5);
+  min-height: 132px;
+  background:
+    linear-gradient(120deg, var(--bg-surface) 0%, rgba(0,0,0,0.10) 100%),
+    radial-gradient(120% 140% at 0% 0%, var(--club-glow-2), transparent 60%),
+    radial-gradient(120% 140% at 100% 100%, var(--orange-glow-2), transparent 60%),
+    var(--bg-surface-2);
+}
+.hero-banner.has-image {
+  background:
+    linear-gradient(90deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0.08) 100%),
+    var(--hero-img) center / cover no-repeat,
+    var(--bg-surface-2);
+}
+.hero-banner.has-image .hero-greeting,
+.hero-banner.has-image .hero-date { color: #fff; }
+.hero-banner.has-image .hero-date { color: rgba(255,255,255,0.82); }
+.hero-avatar {
+  width: 72px; height: 72px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid var(--border-club);
+  box-shadow: 0 6px 20px var(--club-glow-2);
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--club) 0%, var(--club-deep) 100%);
+  color: #fff; font-family: var(--font-mono); font-weight: 800; font-size: 24px;
+  overflow: hidden;
+}
+.hero-greeting { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; text-transform: capitalize; }
+.hero-date { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); text-transform: capitalize; margin-top: 4px; }
+@media (max-width: 600px) {
+  .hero-avatar { width: 56px; height: 56px; font-size: 18px; }
+  .hero-greeting { font-size: 20px; }
+}
+
+/* Login-Bild · optionales /login.jpg als Seiten-Panel */
+.login-shell { display: flex; min-height: 100vh; }
+.login-image {
+  display: none; flex: 1;
+  background:
+    var(--login-img, none) center / cover no-repeat,
+    radial-gradient(120% 120% at 0% 0%, var(--club-glow-2), transparent 55%),
+    radial-gradient(120% 120% at 100% 100%, var(--orange-glow-2), transparent 55%),
+    var(--bg-surface-2);
+  border-right: 1px solid var(--border-subtle);
+}
+@media (min-width: 880px) { .login-image { display: block; } }
+.login-form-side { flex: 1; display: flex; align-items: center; justify-content: center; padding: var(--space-6); }
+
 /* Kalender (aus Kabinski-Saison.html übernommen) */
 .cal-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-5); flex-wrap: wrap; }
 .cal-mode-pill { display: inline-flex; gap: 3px; background: var(--bg-surface-2); border: 1px solid var(--border-subtle); border-radius: var(--radius-full); padding: 4px; }

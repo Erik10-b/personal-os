@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { NAV_ITEMS } from "@/lib/modules";
 import { signOut } from "@/lib/actions/auth";
 import { ThemeToggle } from "./ThemeToggle";
+import { Avatar } from "@/components/ui/Avatar";
 
 export function HeaderNav({ userInitials }: { userInitials: string }) {
   const pathname = usePathname();
@@ -43,8 +44,8 @@ export function HeaderNav({ userInitials }: { userInitials: string }) {
         <ThemeToggle />
 
         <form action={signOut}>
-          <button className="user-pin" type="submit" title="Abmelden">
-            {userInitials}
+          <button className="user-pin" type="submit" title="Abmelden" style={{ overflow: "hidden", padding: 0 }}>
+            <Avatar size={36} fallback={<span>{userInitials}</span>} />
           </button>
         </form>
       </div>

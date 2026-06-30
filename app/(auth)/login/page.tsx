@@ -8,15 +8,12 @@ export default async function LoginPage({
   const { error } = await searchParams;
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "var(--space-6)",
-      }}
-    >
+    <div className="login-shell">
+      <div
+        className="login-image"
+        style={{ "--login-img": "url(/login.jpg)" } as React.CSSProperties}
+      />
+      <div className="login-form-side">
       <div className="card" style={{ width: "100%", maxWidth: 380 }}>
         <div style={{ marginBottom: "var(--space-6)" }}>
           <div
@@ -65,6 +62,7 @@ export default async function LoginPage({
             Anmelden
           </button>
         </form>
+      </div>
       </div>
     </div>
   );
