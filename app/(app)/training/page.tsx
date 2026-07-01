@@ -181,15 +181,37 @@ export default async function TrainingPage() {
                   <TemplateExerciseRow key={ex.id} ex={ex} />
                 ))}
 
-                <form action={addTemplateExercise} style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 4 }}>
+                <form
+                  action={addTemplateExercise}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                    marginTop: 4,
+                    padding: 10,
+                    borderRadius: "var(--radius-md)",
+                    border: "1px dashed var(--border-subtle)",
+                  }}
+                >
                   <input type="hidden" name="template_id" value={template.id} />
-                  <input className="input" name="name" placeholder="Neue Übung" required style={{ flex: 1, minWidth: 90, fontSize: 11 }} />
-                  <input className="input mono" name="default_sets" type="number" min="1" defaultValue={3} style={{ width: 38, fontSize: 11 }} />
-                  <input className="input mono" name="default_reps" type="number" min="1" defaultValue={8} style={{ width: 38, fontSize: 11 }} />
-                  <input className="input mono" name="default_weight_kg" type="number" min="0" step="0.5" defaultValue={0} style={{ width: 50, fontSize: 11 }} />
-                  <button type="submit" className="btn ghost sm">
-                    +
-                  </button>
+                  <input className="input" name="name" placeholder="Neue Übung" required style={{ width: "100%", fontSize: 12.5 }} />
+                  <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+                    <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+                      <span style={{ fontSize: 9, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)", textTransform: "uppercase" }}>Sätze</span>
+                      <input className="input mono" name="default_sets" type="number" min="1" defaultValue={3} style={{ width: "100%", textAlign: "center", padding: "7px 4px", fontSize: 12 }} />
+                    </label>
+                    <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+                      <span style={{ fontSize: 9, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)", textTransform: "uppercase" }}>Wdh.</span>
+                      <input className="input mono" name="default_reps" type="number" min="1" defaultValue={8} style={{ width: "100%", textAlign: "center", padding: "7px 4px", fontSize: 12 }} />
+                    </label>
+                    <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+                      <span style={{ fontSize: 9, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)", textTransform: "uppercase" }}>kg</span>
+                      <input className="input mono" name="default_weight_kg" type="number" min="0" step="0.5" defaultValue={0} style={{ width: "100%", textAlign: "center", padding: "7px 4px", fontSize: 12 }} />
+                    </label>
+                    <button type="submit" className="btn secondary sm" style={{ flexShrink: 0 }}>
+                      + Übung
+                    </button>
+                  </div>
                 </form>
 
                 <form action={deleteTemplate} style={{ marginTop: 4 }}>
