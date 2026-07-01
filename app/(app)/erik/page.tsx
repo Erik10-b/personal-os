@@ -11,10 +11,25 @@ import { WeightLineChart } from "@/components/charts/WeightLineChart";
 import { KanbanBoard } from "@/components/todos/KanbanBoard";
 import { GoalSection } from "@/components/goals/GoalSection";
 import { EmptyState } from "@/components/ui/Card";
+import Link from "next/link";
 
-function SectionHead({ title }: { title: string }) {
+function SectionHead({ title, linkHref, linkLabel }: { title: string; linkHref?: string; linkLabel?: string }) {
   return (
-    <h2 style={{ fontSize: 16, fontWeight: 700, margin: "var(--space-8) 0 var(--space-4)" }}>{title}</h2>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "baseline",
+        margin: "var(--space-8) 0 var(--space-4)",
+      }}
+    >
+      <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{title}</h2>
+      {linkHref && (
+        <Link href={linkHref} className="btn ghost sm">
+          {linkLabel ?? "Details →"}
+        </Link>
+      )}
+    </div>
   );
 }
 
@@ -43,7 +58,7 @@ export default async function ErikPage() {
       </div>
 
       {/* ===== Habits ===== */}
-      <SectionHead title="Habits" />
+      <SectionHead title="Habits" linkHref="/erik/habits" linkLabel="Analytics-Dashboard →" />
       <form action={createHabit} style={{ display: "flex", gap: "var(--space-2)", marginBottom: "var(--space-6)" }}>
         <input className="input" name="name" placeholder="Neue Habit, z.B. Lesen" required style={{ flex: 1 }} />
         <button type="submit" className="btn primary">
