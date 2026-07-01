@@ -39,6 +39,18 @@ export default async function TrainingPage() {
   const openSessions = sessions.filter((s) => !s.completed_at);
   const doneSessions = sessions.filter((s) => s.completed_at);
 
+  // Verlauf nach Kategorie (Titel) gruppieren, jüngste Kategorie zuerst
+  const groupsMap = new Map<string, typeof doneSessions>();
+  for (const s of doneSessions) {
+    const key = s.title || "Sonstige";
+    const list = groupsMap.get(key) ?? [];
+    list.push(s);
+    groupsMap.set(key, list);
+  }
+  const doneGroups = Array.from(groupsMap.entries()).sort((a, b) =>
+    (b[1][0]?.session_date ?? "").localeCompare(a[1][0]?.session_date ?? "")
+  );
+
   return (
     <>
       <div className="page-head">
@@ -225,61 +237,74 @@ export default async function TrainingPage() {
       {/* ===== Historie + Bestleistungen ===== */}
       <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 var(--space-4)" }}>Verlauf</h2>
       <div className="habit-dash-bottom">
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)", minWidth: 0 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)", minWidth: 0 }}>
           {doneSessions.length === 0 ? (
             <EmptyState>Noch keine abgeschlossenen Sessions.</EmptyState>
           ) : (
-            doneSessions.map((session) => (
-              <div key={session.id} className="card">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-3)" }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>{session.title || "Training"}</div>
-                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--text-tertiary)" }}>
-                      {formatDate(session.session_date)}
-                    </div>
-                    {session.note && (
-                      <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>{session.note}</div>
-                    )}
-                  </div>
-                  <div style={{ display: "flex", gap: "var(--space-2)" }}>
-                    <form action={reopenSession}>
-                      <input type="hidden" name="id" value={session.id} />
-                      <button type="submit" className="btn ghost sm">
-                        Bearbeiten
-                      </button>
-                    </form>
-                    <form action={deleteSession}>
-                      <input type="hidden" name="id" value={session.id} />
-                      <button type="submit" className="btn ghost sm">
-                        ✕
-                      </button>
-                    </form>
-                  </div>
-                </div>
+            doneGroups.map(([category, groupSessions]) => (
+              <details key={category} className="card">
+                <summary style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "var(--space-2)" }}>
+                  <span style={{ fontWeight: 700, fontSize: 14 }}>{category}</span>
+                  <span className="badge neutral mono">{groupSessions.length}</span>
+                </summary>
 
-                {session.exercises.length > 0 && (
-                  <table className="k-table">
-                    <thead>
-                      <tr>
-                        <th>Übung</th>
-                        <th>Sätze</th>
-                        <th>Wdh.</th>
-                        <th>Gewicht</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {session.exercises.map((ex) => (
-                        <tr key={ex.id}>
-                          <td>{ex.name}</td>
-                          <td className="mono">{ex.sets}</td>
-                          <td className="mono">{ex.reps}</td>
-                          <td className="mono">{formatWeight(ex.weight_kg)} kg</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)", marginTop: "var(--space-4)" }}>
+                  {groupSessions.map((session) => (
+                    <div
+                      key={session.id}
+                      style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: "var(--space-3)" }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-2)" }}>
+                        <div>
+                          <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--text-tertiary)" }}>
+                            {formatDate(session.session_date)}
+                          </div>
+                          {session.note && (
+                            <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>{session.note}</div>
+                          )}
+                        </div>
+                        <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                          <form action={reopenSession}>
+                            <input type="hidden" name="id" value={session.id} />
+                            <button type="submit" className="btn ghost sm">
+                              Bearbeiten
+                            </button>
+                          </form>
+                          <form action={deleteSession}>
+                            <input type="hidden" name="id" value={session.id} />
+                            <button type="submit" className="btn ghost sm">
+                              ✕
+                            </button>
+                          </form>
+                        </div>
+                      </div>
+
+                      {session.exercises.length > 0 && (
+                        <table className="k-table">
+                          <thead>
+                            <tr>
+                              <th>Übung</th>
+                              <th>Sätze</th>
+                              <th>Wdh.</th>
+                              <th>Gewicht</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {session.exercises.map((ex) => (
+                              <tr key={ex.id}>
+                                <td>{ex.name}</td>
+                                <td className="mono">{ex.sets}</td>
+                                <td className="mono">{ex.reps}</td>
+                                <td className="mono">{formatWeight(ex.weight_kg)} kg</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </details>
             ))
           )}
         </div>
