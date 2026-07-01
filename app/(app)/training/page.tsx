@@ -1,9 +1,14 @@
 import { getPersonalBests, getWorkoutSessions } from "@/lib/services/training";
 import { getTemplates } from "@/lib/services/trainingTemplates";
-import { addExercise, createSession, deleteExercise, deleteSession, updateExercise } from "@/lib/actions/training";
+import {
+  addExercise,
+  completeSession,
+  deleteSession,
+  reopenSession,
+  startSession,
+} from "@/lib/actions/training";
 import {
   addTemplateExercise,
-  createSessionFromTemplate,
   createTemplate,
   deleteTemplate,
   deleteTemplateExercise,
@@ -11,9 +16,19 @@ import {
 } from "@/lib/actions/trainingTemplates";
 import { EmptyState } from "@/components/ui/Card";
 import { TrainingProgress } from "@/components/training/TrainingProgress";
+import { SessionExerciseRow } from "@/components/training/SessionExerciseRow";
 
 function formatWeight(kg: number) {
   return kg % 1 === 0 ? kg.toFixed(0) : kg.toFixed(1);
+}
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr + "T00:00:00").toLocaleDateString("de-DE", {
+    weekday: "short",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 }
 
 export default async function TrainingPage() {
@@ -21,43 +36,145 @@ export default async function TrainingPage() {
   const [sessions, templates] = await Promise.all([getWorkoutSessions(100), getTemplates()]);
   const bests = getPersonalBests(sessions);
 
+  const openSessions = sessions.filter((s) => !s.completed_at);
+  const doneSessions = sessions.filter((s) => s.completed_at);
+
   return (
     <>
       <div className="page-head">
         <div>
           <h1>Training</h1>
-          <p>Trainingsfortschritt festhalten — Übung, Sätze, Wiederholungen, Gewicht.</p>
+          <p>Session starten, Werte pro Übung eintragen, am Ende abschließen.</p>
         </div>
       </div>
 
-      {/* ===== Vorlagen ===== */}
-      <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 var(--space-4)" }}>Vorlagen</h2>
-      <div className="module-grid" style={{ marginBottom: "var(--space-4)" }}>
-        {templates.map((template) => (
-          <div key={template.id} className="card">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-3)" }}>
-              <div style={{ fontWeight: 700, fontSize: 14 }}>{template.name}</div>
-              <form action={deleteTemplate}>
-                <input type="hidden" name="id" value={template.id} />
-                <button type="submit" className="btn ghost sm">
-                  Löschen
+      {/* ===== Session starten ===== */}
+      <form
+        action={startSession}
+        className="card"
+        style={{ display: "flex", gap: "var(--space-3)", alignItems: "flex-end", marginBottom: "var(--space-6)", flexWrap: "wrap" }}
+      >
+        <div className="form-row" style={{ flex: 1, minWidth: 180 }}>
+          <label htmlFor="template_id">Vorlage</label>
+          <select className="input" id="template_id" name="template_id" defaultValue={templates[0]?.id ?? ""}>
+            {templates.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+            <option value="">Freies Training (ohne Vorlage)</option>
+          </select>
+        </div>
+        <div className="form-row">
+          <label htmlFor="session_date">Datum</label>
+          <input className="input mono" id="session_date" name="session_date" type="date" defaultValue={today} required />
+        </div>
+        <button type="submit" className="btn primary">
+          Session starten
+        </button>
+      </form>
+
+      {/* ===== Offene Session(s) ===== */}
+      {openSessions.length > 0 && (
+        <div style={{ marginBottom: "var(--space-8)" }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 var(--space-4)" }}>Aktives Training</h2>
+          {openSessions.map((session) => (
+            <div key={session.id} className="card" style={{ marginBottom: "var(--space-4)", borderColor: "var(--border-club)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-3)" }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 15 }}>{session.title || "Training"}</div>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--text-tertiary)" }}>
+                    {formatDate(session.session_date)} · offen
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                  <form action={completeSession}>
+                    <input type="hidden" name="id" value={session.id} />
+                    <button type="submit" className="btn primary sm">
+                      ✓ Abschließen
+                    </button>
+                  </form>
+                  <form action={deleteSession}>
+                    <input type="hidden" name="id" value={session.id} />
+                    <button type="submit" className="btn ghost sm">
+                      Verwerfen
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              {session.exercises.length === 0 ? (
+                <EmptyState>Noch keine Übungen — füge unten welche hinzu.</EmptyState>
+              ) : (
+                <div style={{ marginBottom: "var(--space-4)" }}>
+                  {session.exercises.map((ex) => (
+                    <SessionExerciseRow key={ex.id} ex={ex} />
+                  ))}
+                </div>
+              )}
+
+              <form action={addExercise} style={{ display: "flex", gap: "var(--space-2)", alignItems: "flex-end", flexWrap: "wrap" }}>
+                <input type="hidden" name="session_id" value={session.id} />
+                <div className="form-row" style={{ flex: 2, minWidth: 140 }}>
+                  <label>Übung hinzufügen</label>
+                  <input className="input" name="name" placeholder="z.B. Bankdrücken" required />
+                </div>
+                <div className="form-row" style={{ maxWidth: 70 }}>
+                  <label>Sätze</label>
+                  <input className="input mono" name="sets" type="number" min="1" defaultValue={3} required />
+                </div>
+                <div className="form-row" style={{ maxWidth: 70 }}>
+                  <label>Wdh.</label>
+                  <input className="input mono" name="reps" type="number" min="1" defaultValue={8} required />
+                </div>
+                <div className="form-row" style={{ maxWidth: 90 }}>
+                  <label>Gewicht (kg)</label>
+                  <input className="input mono" name="weight_kg" type="number" min="0" step="0.5" defaultValue={0} required />
+                </div>
+                <button type="submit" className="btn secondary sm">
+                  + Übung
                 </button>
               </form>
             </div>
+          ))}
+        </div>
+      )}
 
-            {template.exercises.length > 0 && (
+      {/* ===== Vorlagen (feste Anzeige, Bearbeiten einklappbar) ===== */}
+      <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 var(--space-4)" }}>Vorlagen</h2>
+      <div className="module-grid" style={{ marginBottom: "var(--space-8)" }}>
+        {templates.map((template) => (
+          <div key={template.id} className="card">
+            <div style={{ fontWeight: 700, fontSize: 14, marginBottom: "var(--space-3)" }}>{template.name}</div>
+
+            {template.exercises.length === 0 ? (
+              <EmptyState>Keine Übungen hinterlegt.</EmptyState>
+            ) : (
               <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 6, marginBottom: "var(--space-3)" }}>
                 {template.exercises.map((ex) => (
-                  <li key={ex.id} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <form
-                      action={updateTemplateExercise}
-                      style={{ display: "flex", alignItems: "center", gap: 4, flex: 1, flexWrap: "wrap" }}
-                    >
+                  <li key={ex.id} style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", fontSize: 12.5 }}>
+                    <span style={{ flex: 1 }}>{ex.name}</span>
+                    <span className="badge neutral mono">
+                      {ex.default_sets}×{ex.default_reps} @ {formatWeight(ex.default_weight_kg)}kg
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <details>
+              <summary style={{ cursor: "pointer", fontSize: 11, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>
+                Bearbeiten
+              </summary>
+              <div style={{ marginTop: "var(--space-3)", display: "flex", flexDirection: "column", gap: 6 }}>
+                {template.exercises.map((ex) => (
+                  <div key={ex.id} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <form action={updateTemplateExercise} style={{ display: "flex", alignItems: "center", gap: 4, flex: 1, flexWrap: "wrap" }}>
                       <input type="hidden" name="id" value={ex.id} />
-                      <input className="input" name="name" defaultValue={ex.name} style={{ flex: 1, minWidth: 90, fontSize: 11 }} />
-                      <input className="input mono" name="default_sets" type="number" min="1" defaultValue={ex.default_sets} style={{ width: 40, fontSize: 11 }} />
-                      <input className="input mono" name="default_reps" type="number" min="1" defaultValue={ex.default_reps} style={{ width: 40, fontSize: 11 }} />
-                      <input className="input mono" name="default_weight_kg" type="number" min="0" step="0.5" defaultValue={ex.default_weight_kg} style={{ width: 52, fontSize: 11 }} />
+                      <input className="input" name="name" defaultValue={ex.name} style={{ flex: 1, minWidth: 80, fontSize: 11 }} />
+                      <input className="input mono" name="default_sets" type="number" min="1" defaultValue={ex.default_sets} style={{ width: 38, fontSize: 11 }} />
+                      <input className="input mono" name="default_reps" type="number" min="1" defaultValue={ex.default_reps} style={{ width: 38, fontSize: 11 }} />
+                      <input className="input mono" name="default_weight_kg" type="number" min="0" step="0.5" defaultValue={ex.default_weight_kg} style={{ width: 50, fontSize: 11 }} />
                       <button type="submit" className="btn ghost sm" title="Speichern">
                         ✓
                       </button>
@@ -68,32 +185,28 @@ export default async function TrainingPage() {
                         ✕
                       </button>
                     </form>
-                  </li>
+                  </div>
                 ))}
-              </ul>
-            )}
 
-            <form
-              action={addTemplateExercise}
-              style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: "var(--space-3)" }}
-            >
-              <input type="hidden" name="template_id" value={template.id} />
-              <input className="input" name="name" placeholder="Übung" required style={{ flex: 1, minWidth: 100, fontSize: 11 }} />
-              <input className="input mono" name="default_sets" type="number" min="1" defaultValue={3} style={{ width: 44, fontSize: 11 }} />
-              <input className="input mono" name="default_reps" type="number" min="1" defaultValue={8} style={{ width: 44, fontSize: 11 }} />
-              <input className="input mono" name="default_weight_kg" type="number" min="0" step="0.5" defaultValue={0} style={{ width: 56, fontSize: 11 }} />
-              <button type="submit" className="btn ghost sm">
-                +
-              </button>
-            </form>
+                <form action={addTemplateExercise} style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 4 }}>
+                  <input type="hidden" name="template_id" value={template.id} />
+                  <input className="input" name="name" placeholder="Neue Übung" required style={{ flex: 1, minWidth: 90, fontSize: 11 }} />
+                  <input className="input mono" name="default_sets" type="number" min="1" defaultValue={3} style={{ width: 38, fontSize: 11 }} />
+                  <input className="input mono" name="default_reps" type="number" min="1" defaultValue={8} style={{ width: 38, fontSize: 11 }} />
+                  <input className="input mono" name="default_weight_kg" type="number" min="0" step="0.5" defaultValue={0} style={{ width: 50, fontSize: 11 }} />
+                  <button type="submit" className="btn ghost sm">
+                    +
+                  </button>
+                </form>
 
-            <form action={createSessionFromTemplate} style={{ display: "flex", gap: "var(--space-2)" }}>
-              <input type="hidden" name="template_id" value={template.id} />
-              <input className="input mono" name="session_date" type="date" defaultValue={today} style={{ flex: 1 }} />
-              <button type="submit" className="btn primary sm">
-                Session starten
-              </button>
-            </form>
+                <form action={deleteTemplate} style={{ marginTop: 4 }}>
+                  <input type="hidden" name="id" value={template.id} />
+                  <button type="submit" className="btn ghost sm" style={{ color: "var(--danger)" }}>
+                    Vorlage löschen
+                  </button>
+                </form>
+              </div>
+            </details>
           </div>
         ))}
 
@@ -106,139 +219,66 @@ export default async function TrainingPage() {
         </form>
       </div>
 
-      {/* ===== Neue Session (frei, ohne Vorlage) ===== */}
-      <form
-        action={createSession}
-        className="card"
-        style={{ display: "flex", gap: "var(--space-3)", alignItems: "flex-end", marginBottom: "var(--space-6)", flexWrap: "wrap" }}
-      >
-        <div className="form-row">
-          <label htmlFor="session_date">Datum</label>
-          <input className="input mono" id="session_date" name="session_date" type="date" defaultValue={today} required />
-        </div>
-        <div className="form-row" style={{ flex: 1, minWidth: 160 }}>
-          <label htmlFor="session_title">Titel</label>
-          <input className="input" id="session_title" name="title" placeholder="z.B. Push Day" />
-        </div>
-        <div className="form-row" style={{ flex: 2, minWidth: 200 }}>
-          <label htmlFor="session_note">Notiz</label>
-          <input className="input" id="session_note" name="note" placeholder="optional" />
-        </div>
-        <button type="submit" className="btn primary">
-          Session anlegen
-        </button>
-      </form>
+      {/* ===== Verlauf ===== */}
+      {doneSessions.length > 0 && <TrainingProgress sessions={doneSessions} />}
 
-      <TrainingProgress sessions={sessions} />
-
+      {/* ===== Historie + Bestleistungen ===== */}
+      <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 var(--space-4)" }}>Verlauf</h2>
       <div className="habit-dash-bottom">
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)", minWidth: 0 }}>
-          {sessions.length === 0 ? (
-            <EmptyState>Noch keine Trainings-Sessions angelegt.</EmptyState>
+          {doneSessions.length === 0 ? (
+            <EmptyState>Noch keine abgeschlossenen Sessions.</EmptyState>
           ) : (
-            sessions.map((session) => (
+            doneSessions.map((session) => (
               <div key={session.id} className="card">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-3)" }}>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>
-                      {session.title || "Training"}
-                    </div>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>{session.title || "Training"}</div>
                     <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--text-tertiary)" }}>
-                      {new Date(session.session_date + "T00:00:00").toLocaleDateString("de-DE", {
-                        weekday: "short",
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })}
+                      {formatDate(session.session_date)}
                     </div>
                     {session.note && (
                       <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>{session.note}</div>
                     )}
                   </div>
-                  <form action={deleteSession}>
-                    <input type="hidden" name="id" value={session.id} />
-                    <button type="submit" className="btn ghost sm">
-                      Session löschen
-                    </button>
-                  </form>
+                  <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                    <form action={reopenSession}>
+                      <input type="hidden" name="id" value={session.id} />
+                      <button type="submit" className="btn ghost sm">
+                        Bearbeiten
+                      </button>
+                    </form>
+                    <form action={deleteSession}>
+                      <input type="hidden" name="id" value={session.id} />
+                      <button type="submit" className="btn ghost sm">
+                        ✕
+                      </button>
+                    </form>
+                  </div>
                 </div>
 
                 {session.exercises.length > 0 && (
-                  <table className="k-table" style={{ marginBottom: "var(--space-4)" }}>
+                  <table className="k-table">
                     <thead>
                       <tr>
                         <th>Übung</th>
                         <th>Sätze</th>
                         <th>Wdh.</th>
-                        <th>Gewicht (kg)</th>
-                        <th></th>
+                        <th>Gewicht</th>
                       </tr>
                     </thead>
                     <tbody>
                       {session.exercises.map((ex) => (
                         <tr key={ex.id}>
                           <td>{ex.name}</td>
-                          <td colSpan={3}>
-                            <form
-                              action={updateExercise}
-                              style={{ display: "flex", gap: 4, alignItems: "center", justifyContent: "flex-end" }}
-                            >
-                              <input type="hidden" name="id" value={ex.id} />
-                              <input className="input mono" name="sets" type="number" min="1" defaultValue={ex.sets} style={{ width: 44, fontSize: 11 }} />
-                              <input className="input mono" name="reps" type="number" min="1" defaultValue={ex.reps} style={{ width: 44, fontSize: 11 }} />
-                              <input
-                                className="input mono"
-                                name="weight_kg"
-                                type="number"
-                                min="0"
-                                step="0.5"
-                                defaultValue={ex.weight_kg}
-                                style={{ width: 60, fontSize: 11 }}
-                              />
-                              <button type="submit" className="btn ghost sm" title="Speichern">
-                                ✓
-                              </button>
-                            </form>
-                          </td>
-                          <td className="right">
-                            <form action={deleteExercise}>
-                              <input type="hidden" name="id" value={ex.id} />
-                              <button type="submit" className="btn ghost sm">
-                                ✕
-                              </button>
-                            </form>
-                          </td>
+                          <td className="mono">{ex.sets}</td>
+                          <td className="mono">{ex.reps}</td>
+                          <td className="mono">{formatWeight(ex.weight_kg)} kg</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 )}
-
-                <form
-                  action={addExercise}
-                  style={{ display: "flex", gap: "var(--space-2)", alignItems: "flex-end", flexWrap: "wrap" }}
-                >
-                  <input type="hidden" name="session_id" value={session.id} />
-                  <div className="form-row" style={{ flex: 2, minWidth: 140 }}>
-                    <label>Übung</label>
-                    <input className="input" name="name" placeholder="z.B. Bankdrücken" required />
-                  </div>
-                  <div className="form-row" style={{ maxWidth: 80 }}>
-                    <label>Sätze</label>
-                    <input className="input mono" name="sets" type="number" min="1" defaultValue={3} required />
-                  </div>
-                  <div className="form-row" style={{ maxWidth: 80 }}>
-                    <label>Wdh.</label>
-                    <input className="input mono" name="reps" type="number" min="1" defaultValue={8} required />
-                  </div>
-                  <div className="form-row" style={{ maxWidth: 100 }}>
-                    <label>Gewicht (kg)</label>
-                    <input className="input mono" name="weight_kg" type="number" min="0" step="0.5" defaultValue={0} required />
-                  </div>
-                  <button type="submit" className="btn secondary sm">
-                    + Übung
-                  </button>
-                </form>
               </div>
             ))
           )}

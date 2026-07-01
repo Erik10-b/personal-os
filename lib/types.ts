@@ -131,6 +131,7 @@ export interface WorkoutSessionRow {
   session_date: string;
   title: string | null;
   note: string | null;
+  completed_at: string | null;
   created_at: string;
 }
 
