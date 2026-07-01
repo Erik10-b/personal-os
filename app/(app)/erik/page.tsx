@@ -6,7 +6,8 @@ import { getMealsForDate, sumMacros } from "@/lib/services/meals";
 import { createHabit } from "@/lib/actions/habits";
 import { logWeight } from "@/lib/actions/weight";
 import { createMeal, deleteMeal } from "@/lib/actions/meals";
-import { HabitCard } from "@/components/habits/HabitCard";
+import { HabitMatrix } from "@/components/habits/HabitMatrix";
+import { getLastNDays } from "@/lib/habitUtils";
 import { WeightLineChart } from "@/components/charts/WeightLineChart";
 import { KanbanBoard } from "@/components/todos/KanbanBoard";
 import { GoalSection } from "@/components/goals/GoalSection";
@@ -68,11 +69,7 @@ export default async function ErikPage() {
       {habits.length === 0 ? (
         <EmptyState>Noch keine Habits angelegt.</EmptyState>
       ) : (
-        <div className="module-grid">
-          {habits.map((habit) => (
-            <HabitCard key={habit.id} habit={habit} compact />
-          ))}
-        </div>
+        <HabitMatrix habits={habits} days={getLastNDays(28)} />
       )}
 
       {/* ===== Gewicht ===== */}

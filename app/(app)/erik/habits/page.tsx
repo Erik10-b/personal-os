@@ -1,19 +1,10 @@
 import Link from "next/link";
 import { getHabitsWithLogs, HabitWithLogs } from "@/lib/services/habits";
-import { createHabit, toggleHabitLog, archiveHabit } from "@/lib/actions/habits";
+import { createHabit } from "@/lib/actions/habits";
+import { HabitMatrix } from "@/components/habits/HabitMatrix";
+import { getLastNDays } from "@/lib/habitUtils";
 
 type View = "yearly" | "monthly" | "daily";
-
-function getLastNDays(n: number): string[] {
-  const days: string[] = [];
-  const d = new Date();
-  for (let i = n - 1; i >= 0; i--) {
-    const day = new Date(d);
-    day.setDate(d.getDate() - i);
-    days.push(day.toISOString().slice(0, 10));
-  }
-  return days;
-}
 
 function completionRate(habits: HabitWithLogs[], day: string): number {
   if (habits.length === 0) return 0;
@@ -219,75 +210,7 @@ function MonthlyView({ habits }: { habits: HabitWithLogs[] }) {
 
       {/* Row 3: Matrix + Rankings + Wochenvergleich */}
       <div className="habit-dash-bottom">
-        <div className="card" style={{ minWidth: 0 }}>
-          <div className="habit-matrix-hd">
-            <span className="habit-section-label" style={{ marginBottom: 0 }}>TÄGLICHE MATRIX</span>
-            <div className="habit-legend">
-              <span className="habit-legend-item">
-                <span
-                  className="habit-legend-dot"
-                  style={{ background: "var(--bg-surface-3)", border: "1px solid var(--border-subtle)" }}
-                />
-                Nicht erledigt
-              </span>
-              <span className="habit-legend-item">
-                <span className="habit-legend-dot" style={{ background: "var(--success)" }} />
-                Erledigt
-              </span>
-            </div>
-          </div>
-          <div className="habit-matrix-scroll">
-            <table className="habit-matrix">
-              <thead>
-                <tr>
-                  <th className="hm-th-name">HABIT</th>
-                  {dayLabels.map((label, i) => (
-                    <th key={i} className="hm-th-day">{label}</th>
-                  ))}
-                  <th className="hm-th-day" />
-                </tr>
-              </thead>
-              <tbody>
-                {habits.map((habit) => {
-                  const logDates = new Set(habit.logs.map((l) => l.log_date));
-                  return (
-                    <tr key={habit.id} className="hm-row">
-                      <td className="hm-td-name">
-                        <span className="hm-habit-name">{habit.name}</span>
-                      </td>
-                      {days.map((day) => {
-                        const checked = logDates.has(day);
-                        return (
-                          <td key={day} className="hm-td-cell">
-                            <form action={toggleHabitLog} style={{ display: "inline-block", lineHeight: 0 }}>
-                              <input type="hidden" name="habit_id" value={habit.id} />
-                              <input type="hidden" name="log_date" value={day} />
-                              <input type="hidden" name="checked" value={String(checked)} />
-                              <button
-                                type="submit"
-                                className={`habit-cell${checked ? " done" : ""}`}
-                                title={`${habit.name} · ${day}`}
-                                aria-label={`${day}${checked ? " erledigt" : ""}`}
-                              />
-                            </form>
-                          </td>
-                        );
-                      })}
-                      <td className="hm-td-cell">
-                        <form action={archiveHabit} style={{ display: "inline-block", lineHeight: 0 }}>
-                          <input type="hidden" name="id" value={habit.id} />
-                          <button type="submit" className="habit-archive-btn" title="Archivieren" aria-label="Habit archivieren">
-                            ×
-                          </button>
-                        </form>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <HabitMatrix habits={habits} days={days} />
 
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
           <div className="card">
