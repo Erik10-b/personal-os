@@ -44,4 +44,11 @@ export const MODULE_ICONS: Record<string, React.ReactElement> = {
       <path d="M12 3v4M3.5 9l3 1.2M3.5 15l3-1.2M20.5 9l-3 1.2M20.5 15l-3-1.2M12 21v-4M8.5 17.5L9.8 13.6M15.5 17.5l-1.3-3.9" />
     </svg>
   ),
+  training: (
+    <svg {...common}>
+      <path d="M6.5 7v10M17.5 7v10" />
+      <path d="M4 9.5h2.5v5H4zM17.5 9.5H20v5h-2.5z" />
+      <path d="M6.5 12h11" />
+    </svg>
+  ),
 };

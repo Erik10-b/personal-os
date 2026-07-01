@@ -124,3 +124,23 @@ export interface MatchRow {
   event_id: string | null;
   created_at: string;
 }
+
+export interface WorkoutSessionRow {
+  id: string;
+  user_id: string;
+  session_date: string;
+  title: string | null;
+  note: string | null;
+  created_at: string;
+}
+
+export interface WorkoutExerciseRow {
+  id: string;
+  session_id: string;
+  user_id: string;
+  name: string;
+  sets: number;
+  reps: number;
+  weight_kg: number;
+  created_at: string;
+}
