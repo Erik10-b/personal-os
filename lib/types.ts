@@ -144,3 +144,22 @@ export interface WorkoutExerciseRow {
   weight_kg: number;
   created_at: string;
 }
+
+export interface WorkoutTemplateRow {
+  id: string;
+  user_id: string;
+  name: string;
+  created_at: string;
+}
+
+export interface WorkoutTemplateExerciseRow {
+  id: string;
+  template_id: string;
+  user_id: string;
+  name: string;
+  default_sets: number;
+  default_reps: number;
+  default_weight_kg: number;
+  order_index: number;
+  created_at: string;
+}

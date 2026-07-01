@@ -42,3 +42,8 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# Persönliche Trainingsdaten (nur lokal, nicht ins öffentliche Repo)
+supabase/seed_training_import.sql
+scripts/training-parsed.json
+scripts/*.mjs

@@ -46,6 +46,23 @@ export async function addExercise(formData: FormData) {
   revalidatePath("/training");
 }
 
+export async function updateExercise(formData: FormData) {
+  const id = String(formData.get("id"));
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("workout_exercises")
+    .update({
+      sets: Math.max(1, Math.round(Number(formData.get("sets") ?? 1))),
+      reps: Math.max(1, Math.round(Number(formData.get("reps") ?? 1))),
+      weight_kg: Math.max(0, Number(formData.get("weight_kg") ?? 0)),
+    })
+    .eq("id", id);
+
+  if (error) throw error;
+  revalidatePath("/training");
+}
+
 export async function deleteExercise(formData: FormData) {
   const id = String(formData.get("id"));
   const supabase = await createClient();
