@@ -17,7 +17,7 @@ export function HabitMatrix({ habits, days }: { habits: HabitWithLogs[]; days: s
             Nicht erledigt
           </span>
           <span className="habit-legend-item">
-            <span className="habit-legend-dot" style={{ background: "var(--success)" }} />
+            <span className="habit-legend-dot" style={{ background: "var(--club)" }} />
             Erledigt
           </span>
         </div>

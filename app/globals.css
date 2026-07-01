@@ -670,53 +670,55 @@ main { min-width: 0; }
 
 /* Matrix table */
 .habit-matrix-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.habit-matrix { border-collapse: separate; border-spacing: 0; font-size: 11px; }
+.habit-matrix { table-layout: fixed; width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; }
 
 .hm-th-name {
-  text-align: left; padding: 0 10px 6px 0;
-  font-family: var(--font-mono); font-size: 9px; font-weight: 600;
+  width: 160px;
+  text-align: left; padding: 0 10px 10px 0;
+  font-family: var(--font-mono); font-size: 10px; font-weight: 600;
   color: var(--text-tertiary); letter-spacing: 0.06em; text-transform: uppercase;
   white-space: nowrap;
   position: sticky; left: 0; background: var(--bg-surface); z-index: 3;
 }
 .hm-th-day {
-  padding: 0 2px 6px; font-family: var(--font-mono); font-size: 9px;
-  font-weight: 500; color: var(--text-tertiary); text-align: center; min-width: 22px;
+  padding: 0 3px 10px; font-family: var(--font-mono); font-size: 10.5px;
+  font-weight: 500; color: var(--text-tertiary); text-align: center;
 }
 .hm-row:hover .hm-td-name,
 .hm-row:hover .hm-td-cell { background: var(--bg-hover); }
 .hm-row:hover .hm-td-name { background: color-mix(in srgb, var(--bg-hover) 100%, transparent); }
 
 .hm-td-name {
-  padding: 3px 10px 3px 0;
+  padding: 6px 10px 6px 0;
   white-space: nowrap;
   position: sticky; left: 0; background: var(--bg-surface); z-index: 2;
   vertical-align: middle;
   border-bottom: 1px solid var(--border-subtle);
 }
-.hm-habit-name { font-size: 11px; font-weight: 600; color: var(--text-primary); }
+.hm-habit-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
 
 .hm-td-cell {
-  padding: 3px 2px; text-align: center; vertical-align: middle;
+  padding: 6px 3px; text-align: center; vertical-align: middle;
   border-bottom: 1px solid var(--border-subtle);
 }
 .hm-row:last-child .hm-td-name,
 .hm-row:last-child .hm-td-cell { border-bottom: none; }
 
 .habit-cell {
-  width: 16px; height: 16px; border-radius: 3px;
+  width: 100%; max-width: 34px; aspect-ratio: 1;
+  border-radius: 6px;
   border: 1px solid var(--border-subtle);
   background: var(--bg-surface-3);
   cursor: pointer; display: block; padding: 0; margin: 0 auto;
   transition: transform var(--duration-fast) var(--ease), box-shadow var(--duration-fast) var(--ease);
 }
-.habit-cell:hover { transform: scale(1.35); position: relative; z-index: 4; }
+.habit-cell:hover { transform: scale(1.22); position: relative; z-index: 4; }
 .habit-cell.done {
-  background: var(--success);
+  background: var(--club);
   border-color: transparent;
-  box-shadow: 0 0 5px rgba(16,185,129,0.40);
+  box-shadow: 0 0 5px var(--club-glow);
 }
-.habit-cell.done:hover { box-shadow: 0 0 9px rgba(16,185,129,0.60); }
+.habit-cell.done:hover { box-shadow: 0 0 10px var(--club-glow); }
 
 .habit-archive-btn {
   width: 18px; height: 18px; border-radius: 4px;
