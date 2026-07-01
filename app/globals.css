@@ -646,7 +646,7 @@ main { min-width: 0; }
 .habit-gauge-sub { font-family: var(--font-mono); font-size: 9px; color: var(--text-tertiary); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 3px; }
 
 /* Weekly bars */
-.habit-week-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); }
+.habit-week-grid { display: grid; grid-template-columns: repeat(var(--week-cols, 4), 1fr); gap: var(--space-3); }
 @media (max-width: 600px) { .habit-week-grid { grid-template-columns: repeat(2, 1fr); } }
 
 .habit-week-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3); }

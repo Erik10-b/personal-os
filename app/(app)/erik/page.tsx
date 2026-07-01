@@ -7,7 +7,7 @@ import { createHabit } from "@/lib/actions/habits";
 import { logWeight } from "@/lib/actions/weight";
 import { createMeal, deleteMeal } from "@/lib/actions/meals";
 import { HabitMatrix } from "@/components/habits/HabitMatrix";
-import { getLastNDays } from "@/lib/habitUtils";
+import { getCurrentMonthDays } from "@/lib/habitUtils";
 import { WeightLineChart } from "@/components/charts/WeightLineChart";
 import { KanbanBoard } from "@/components/todos/KanbanBoard";
 import { GoalSection } from "@/components/goals/GoalSection";
@@ -38,7 +38,7 @@ export default async function ErikPage() {
   const today = new Date().toISOString().slice(0, 10);
 
   const [habits, weightLogs, todos, weekGoals, monthGoals, todayMeals] = await Promise.all([
-    getHabitsWithLogs(),
+    getHabitsWithLogs(31),
     getWeightLogs(60),
     getTodos("erik"),
     getGoals("week"),
@@ -69,7 +69,7 @@ export default async function ErikPage() {
       {habits.length === 0 ? (
         <EmptyState>Noch keine Habits angelegt.</EmptyState>
       ) : (
-        <HabitMatrix habits={habits} days={getLastNDays(28)} />
+        <HabitMatrix habits={habits} days={getCurrentMonthDays()} />
       )}
 
       {/* ===== Gewicht ===== */}

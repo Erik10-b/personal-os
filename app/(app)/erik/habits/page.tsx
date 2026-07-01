@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getHabitsWithLogs, HabitWithLogs } from "@/lib/services/habits";
 import { createHabit } from "@/lib/actions/habits";
 import { HabitMatrix } from "@/components/habits/HabitMatrix";
-import { getLastNDays } from "@/lib/habitUtils";
+import { getCurrentMonthDays, getLastNDays } from "@/lib/habitUtils";
 
 type View = "yearly" | "monthly" | "daily";
 
@@ -69,35 +69,40 @@ export default async function HabitsPage({
 }
 
 function MonthlyView({ habits }: { habits: HabitWithLogs[] }) {
-  const days = getLastNDays(28);
+  const days = getCurrentMonthDays();
+  const monthLabel = new Date().toLocaleDateString("de-DE", { month: "long", year: "numeric" });
   const dailyRates = days.map((day) => completionRate(habits, day));
 
-  const weeks = [0, 1, 2, 3].map((w) => {
+  const weekCount = Math.max(1, Math.ceil(days.length / 7));
+  const weeks = Array.from({ length: weekCount }).map((_, w) => {
     const wRates = dailyRates.slice(w * 7, (w + 1) * 7);
-    const avg = wRates.reduce((s, r) => s + r, 0) / wRates.length;
+    const avg = wRates.length > 0 ? wRates.reduce((s, r) => s + r, 0) / wRates.length : 0;
     return { num: w + 1, rates: wRates, avg };
   });
 
-  const overallRate = dailyRates.reduce((s, r) => s + r, 0) / dailyRates.length;
+  const overallRate = dailyRates.length > 0 ? dailyRates.reduce((s, r) => s + r, 0) / dailyRates.length : 0;
 
   const ranking = habits
     .map((h) => {
       const done = days.filter((d) => h.logs.some((l) => l.log_date === d)).length;
-      return { id: h.id, name: h.name, rate: done / days.length };
+      return { id: h.id, name: h.name, rate: days.length > 0 ? done / days.length : 0 };
     })
     .sort((a, b) => b.rate - a.rate);
 
-  // Wochenvergleich: aktuelle 7 Tage vs. vorherige 7 Tage, pro Habit (Top 3)
-  const last7 = days.slice(21, 28);
-  const prev7 = days.slice(14, 21);
-  const weekDelta = habits
-    .map((h) => {
-      const nowRate = last7.filter((d) => h.logs.some((l) => l.log_date === d)).length / last7.length;
-      const prevRate = prev7.filter((d) => h.logs.some((l) => l.log_date === d)).length / prev7.length;
-      return { id: h.id, name: h.name, nowRate, delta: nowRate - prevRate };
-    })
-    .sort((a, b) => b.nowRate - a.nowRate)
-    .slice(0, 3);
+  // Wochenvergleich: aktuelle 7 Tage vs. vorherige 7 Tage, pro Habit (Top 3) — nur wenn genug Tage im Monat vergangen sind
+  const last7 = days.slice(-7);
+  const prev7 = days.slice(-14, -7);
+  const weekDelta =
+    prev7.length === 7
+      ? habits
+          .map((h) => {
+            const nowRate = last7.filter((d) => h.logs.some((l) => l.log_date === d)).length / last7.length;
+            const prevRate = prev7.filter((d) => h.logs.some((l) => l.log_date === d)).length / prev7.length;
+            return { id: h.id, name: h.name, nowRate, delta: nowRate - prevRate };
+          })
+          .sort((a, b) => b.nowRate - a.nowRate)
+          .slice(0, 3)
+      : [];
 
   const dayLabels = days.map((d) => new Date(d + "T00:00:00").getDate().toString().padStart(2, "0"));
 
@@ -105,24 +110,30 @@ function MonthlyView({ habits }: { habits: HabitWithLogs[] }) {
   const H = 110;
   const n = dailyRates.length;
   const pts = dailyRates.map((r, i) => ({
-    x: (i / (n - 1)) * W,
+    x: n > 1 ? (i / (n - 1)) * W : W / 2,
     y: H - r * H * 0.82 - H * 0.08,
   }));
   const linePts = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
   const areaPath = `M0,${H} ${pts.map((p) => `L${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ")} L${W},${H} Z`;
 
+  const tickCount = Math.min(5, n);
+  const tickIndices =
+    tickCount > 1
+      ? Array.from({ length: tickCount }, (_, i) => Math.round((i / (tickCount - 1)) * (n - 1)))
+      : [0];
+
   const gaugeR = 54;
   const gaugeCirc = 2 * Math.PI * gaugeR;
   const gaugeOffset = gaugeCirc * (1 - overallRate);
 
-  const weekColors = ["var(--purple)", "var(--warning)", "var(--success)", "var(--club)"];
+  const weekColors = ["var(--purple)", "var(--warning)", "var(--success)", "var(--club)", "var(--teal)"];
 
   return (
     <div className="habit-dash">
       {/* Row 1: Trend chart + Gauge */}
       <div className="habit-dash-top">
         <div className="card habit-chart-card">
-          <span className="habit-section-label">28-TAGE TREND</span>
+          <span className="habit-section-label">{monthLabel.toUpperCase()}</span>
           <svg viewBox={`0 0 ${W} ${H + 20}`} style={{ width: "100%", overflow: "visible", display: "block" }}>
             <defs>
               <linearGradient id="hg" x1="0" x2="0" y1="0" y2="1">
@@ -140,10 +151,10 @@ function MonthlyView({ habits }: { habits: HabitWithLogs[] }) {
               strokeLinejoin="round"
               style={{ filter: "drop-shadow(0 0 5px rgba(16,185,129,0.5))" }}
             />
-            {[0, 6, 13, 20, 27].map((i) => (
+            {tickIndices.map((i) => (
               <text
                 key={i}
-                x={(i / (n - 1)) * W}
+                x={n > 1 ? (i / (n - 1)) * W : W / 2}
                 y={H + 16}
                 textAnchor="middle"
                 fontSize="9"
@@ -176,14 +187,14 @@ function MonthlyView({ habits }: { habits: HabitWithLogs[] }) {
             </svg>
             <div className="habit-gauge-inner">
               <div className="habit-gauge-pct">{Math.round(overallRate * 100)}%</div>
-              <div className="habit-gauge-sub">28 Tage</div>
+              <div className="habit-gauge-sub">{days.length} Tage</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Row 2: 4-week bar charts */}
-      <div className="habit-week-grid">
+      {/* Row 2: Wochen-Balkendiagramme (variable Anzahl je Monatslänge) */}
+      <div className="habit-week-grid" style={{ "--week-cols": weeks.length } as React.CSSProperties}>
         {weeks.map((week, wi) => (
           <div key={wi} className="card">
             <div className="habit-week-head">
