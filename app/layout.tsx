@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="de" data-theme="dark" className={outfit.variable}>
+    <html lang="de" data-theme="dark" className={outfit.variable} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
