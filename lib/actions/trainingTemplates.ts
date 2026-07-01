@@ -44,6 +44,24 @@ export async function addTemplateExercise(formData: FormData) {
   revalidatePath("/training");
 }
 
+export async function updateTemplateExercise(formData: FormData) {
+  const id = String(formData.get("id"));
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("workout_template_exercises")
+    .update({
+      name: String(formData.get("name")),
+      default_sets: Math.max(1, Math.round(Number(formData.get("default_sets") ?? 1))),
+      default_reps: Math.max(1, Math.round(Number(formData.get("default_reps") ?? 1))),
+      default_weight_kg: Math.max(0, Number(formData.get("default_weight_kg") ?? 0)),
+    })
+    .eq("id", id);
+
+  if (error) throw error;
+  revalidatePath("/training");
+}
+
 export async function deleteTemplateExercise(formData: FormData) {
   const id = String(formData.get("id"));
   const supabase = await createClient();
@@ -65,7 +83,7 @@ export async function createSessionFromTemplate(formData: FormData) {
     .from("workout_templates")
     .select("name")
     .eq("id", templateId)
-    .single();
+    .maybeSingle();
   if (templateError) throw templateError;
 
   const { data: templateExercises, error: exercisesError } = await supabase
@@ -75,22 +93,25 @@ export async function createSessionFromTemplate(formData: FormData) {
     .order("order_index", { ascending: true });
   if (exercisesError) throw exercisesError;
 
+  const userId = userData.user.id;
+
   const { data: session, error: sessionError } = await supabase
     .from("workout_sessions")
     .insert({
-      user_id: userData.user.id,
+      user_id: userId,
       session_date: sessionDate,
-      title: template.name,
+      title: template?.name ?? "Training",
     })
     .select("id")
     .single();
   if (sessionError) throw sessionError;
+  if (!session) throw new Error("Session konnte nicht angelegt werden");
 
   if (templateExercises && templateExercises.length > 0) {
     const { error: insertError } = await supabase.from("workout_exercises").insert(
       templateExercises.map((ex) => ({
         session_id: session.id,
-        user_id: userData.user!.id,
+        user_id: userId,
         name: ex.name,
         sets: ex.default_sets,
         reps: ex.default_reps,

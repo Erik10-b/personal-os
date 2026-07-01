@@ -7,8 +7,10 @@ import {
   createTemplate,
   deleteTemplate,
   deleteTemplateExercise,
+  updateTemplateExercise,
 } from "@/lib/actions/trainingTemplates";
 import { EmptyState } from "@/components/ui/Card";
+import { TrainingProgress } from "@/components/training/TrainingProgress";
 
 function formatWeight(kg: number) {
   return kg % 1 === 0 ? kg.toFixed(0) : kg.toFixed(1);
@@ -44,13 +46,22 @@ export default async function TrainingPage() {
             </div>
 
             {template.exercises.length > 0 && (
-              <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 4, marginBottom: "var(--space-3)" }}>
+              <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 6, marginBottom: "var(--space-3)" }}>
                 {template.exercises.map((ex) => (
-                  <li key={ex.id} style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", fontSize: 12 }}>
-                    <span style={{ flex: 1 }}>{ex.name}</span>
-                    <span className="badge neutral mono">
-                      {ex.default_sets}×{ex.default_reps} @ {formatWeight(ex.default_weight_kg)}kg
-                    </span>
+                  <li key={ex.id} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <form
+                      action={updateTemplateExercise}
+                      style={{ display: "flex", alignItems: "center", gap: 4, flex: 1, flexWrap: "wrap" }}
+                    >
+                      <input type="hidden" name="id" value={ex.id} />
+                      <input className="input" name="name" defaultValue={ex.name} style={{ flex: 1, minWidth: 90, fontSize: 11 }} />
+                      <input className="input mono" name="default_sets" type="number" min="1" defaultValue={ex.default_sets} style={{ width: 40, fontSize: 11 }} />
+                      <input className="input mono" name="default_reps" type="number" min="1" defaultValue={ex.default_reps} style={{ width: 40, fontSize: 11 }} />
+                      <input className="input mono" name="default_weight_kg" type="number" min="0" step="0.5" defaultValue={ex.default_weight_kg} style={{ width: 52, fontSize: 11 }} />
+                      <button type="submit" className="btn ghost sm" title="Speichern">
+                        ✓
+                      </button>
+                    </form>
                     <form action={deleteTemplateExercise}>
                       <input type="hidden" name="id" value={ex.id} />
                       <button type="submit" className="btn ghost sm">
@@ -117,6 +128,8 @@ export default async function TrainingPage() {
           Session anlegen
         </button>
       </form>
+
+      <TrainingProgress sessions={sessions} />
 
       <div className="habit-dash-bottom">
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)", minWidth: 0 }}>
