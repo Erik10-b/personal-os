@@ -45,7 +45,7 @@ export function HabitMatrix({ habits, days }: { habits: HabitWithLogs[]; days: s
                     const checked = logDates.has(day);
                     return (
                       <td key={day} className="hm-td-cell">
-                        <form action={toggleHabitLog} style={{ display: "inline-block", lineHeight: 0 }}>
+                        <form action={toggleHabitLog} style={{ display: "block", width: "100%", lineHeight: 0 }}>
                           <input type="hidden" name="habit_id" value={habit.id} />
                           <input type="hidden" name="log_date" value={day} />
                           <input type="hidden" name="checked" value={String(checked)} />
