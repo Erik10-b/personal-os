@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getHabitsWithLogs, HabitWithLogs } from "@/lib/services/habits";
 import { createHabit } from "@/lib/actions/habits";
 import { HabitMatrix } from "@/components/habits/HabitMatrix";
-import { getCurrentMonthDays, getLastNDays } from "@/lib/habitUtils";
+import { getCurrentMonthAllDays, getCurrentMonthDays, getLastNDays } from "@/lib/habitUtils";
 
 type View = "yearly" | "monthly" | "daily";
 
@@ -70,6 +70,7 @@ export default async function HabitsPage({
 
 function MonthlyView({ habits }: { habits: HabitWithLogs[] }) {
   const days = getCurrentMonthDays();
+  const allDays = getCurrentMonthAllDays();
   const monthLabel = new Date().toLocaleDateString("de-DE", { month: "long", year: "numeric" });
   const dailyRates = days.map((day) => completionRate(habits, day));
 
@@ -221,7 +222,7 @@ function MonthlyView({ habits }: { habits: HabitWithLogs[] }) {
 
       {/* Row 3: Matrix + Rankings + Wochenvergleich */}
       <div className="habit-dash-bottom">
-        <HabitMatrix habits={habits} days={days} />
+        <HabitMatrix habits={habits} days={allDays} />
 
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
           <div className="card">

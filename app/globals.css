@@ -704,6 +704,9 @@ main { min-width: 0; }
 .hm-row:last-child .hm-td-name,
 .hm-row:last-child .hm-td-cell { border-bottom: none; }
 
+.hm-th-day.today { color: var(--club); font-weight: 700; }
+.hm-td-cell.today { background: var(--club-glow-2); box-shadow: inset 0 0 0 1px var(--border-club); border-radius: 4px; }
+
 .habit-cell {
   width: 100%; max-width: 34px; aspect-ratio: 1;
   border-radius: 6px;

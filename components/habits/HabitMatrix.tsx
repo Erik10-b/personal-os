@@ -1,8 +1,10 @@
 import { HabitWithLogs } from "@/lib/services/habits";
 import { archiveHabit, toggleHabitLog } from "@/lib/actions/habits";
+import { getTodayKey } from "@/lib/habitUtils";
 
 export function HabitMatrix({ habits, days }: { habits: HabitWithLogs[]; days: string[] }) {
   const dayLabels = days.map((d) => new Date(d + "T00:00:00").getDate().toString().padStart(2, "0"));
+  const todayKey = getTodayKey();
 
   return (
     <div className="card" style={{ minWidth: 0 }}>
@@ -28,7 +30,7 @@ export function HabitMatrix({ habits, days }: { habits: HabitWithLogs[]; days: s
             <tr>
               <th className="hm-th-name">HABIT</th>
               {dayLabels.map((label, i) => (
-                <th key={i} className="hm-th-day">{label}</th>
+                <th key={i} className={`hm-th-day${days[i] === todayKey ? " today" : ""}`}>{label}</th>
               ))}
               <th className="hm-th-day" />
             </tr>
@@ -43,8 +45,9 @@ export function HabitMatrix({ habits, days }: { habits: HabitWithLogs[]; days: s
                   </td>
                   {days.map((day) => {
                     const checked = logDates.has(day);
+                    const isToday = day === todayKey;
                     return (
-                      <td key={day} className="hm-td-cell">
+                      <td key={day} className={`hm-td-cell${isToday ? " today" : ""}`}>
                         <form action={toggleHabitLog} style={{ display: "block", width: "100%", lineHeight: 0 }}>
                           <input type="hidden" name="habit_id" value={habit.id} />
                           <input type="hidden" name="log_date" value={day} />

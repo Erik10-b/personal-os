@@ -7,7 +7,7 @@ import { createHabit } from "@/lib/actions/habits";
 import { logWeight } from "@/lib/actions/weight";
 import { createMeal, deleteMeal } from "@/lib/actions/meals";
 import { HabitMatrix } from "@/components/habits/HabitMatrix";
-import { getCurrentMonthDays } from "@/lib/habitUtils";
+import { getCurrentMonthAllDays } from "@/lib/habitUtils";
 import { WeightLineChart } from "@/components/charts/WeightLineChart";
 import { KanbanBoard } from "@/components/todos/KanbanBoard";
 import { GoalSection } from "@/components/goals/GoalSection";
@@ -69,7 +69,7 @@ export default async function ErikPage() {
       {habits.length === 0 ? (
         <EmptyState>Noch keine Habits angelegt.</EmptyState>
       ) : (
-        <HabitMatrix habits={habits} days={getCurrentMonthDays()} />
+        <HabitMatrix habits={habits} days={getCurrentMonthAllDays()} />
       )}
 
       {/* ===== Gewicht ===== */}
