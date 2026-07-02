@@ -45,3 +45,19 @@ export function formatSetsSummary(ex: ExerciseLike): string {
     .map((s) => `${formatWeight(s.weight_kg)}×${s.reps}`)
     .join(" · ");
 }
+
+/**
+ * Letzte erbrachte Leistung je Übungsname über abgeschlossene Sessions
+ * (jüngste zuerst erwartet) — als Referenz "Letztes Mal" in der aktiven Session.
+ */
+export function lastPerformanceByName(
+  doneSessions: { exercises: (ExerciseLike & { name: string })[] }[]
+): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const session of doneSessions) {
+    for (const ex of session.exercises) {
+      if (!map.has(ex.name)) map.set(ex.name, formatSetsSummary(ex));
+    }
+  }
+  return map;
+}

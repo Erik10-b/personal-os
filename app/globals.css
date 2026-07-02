@@ -454,6 +454,39 @@ main { min-width: 0; }
 @media (min-width: 880px) { .login-image { display: block; } }
 .login-form-side { flex: 1; display: flex; align-items: center; justify-content: center; padding: var(--space-6); }
 
+/* Training · aktive Session */
+.session-actionbar {
+  position: sticky; bottom: 12px; z-index: 5;
+  display: flex; gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding: 8px;
+  background: var(--header-bg);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+@media (max-width: 800px) { .session-actionbar { bottom: calc(var(--footer-bar-height) + 10px); } }
+.session-actionbar .btn.primary { flex: 1; min-height: 46px; font-size: 14px; }
+
+/* Training · Start-Karten (One-Tap aus Vorlage) */
+.start-grid { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.start-card-btn {
+  width: 100%; min-height: 92px;
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between;
+  gap: 6px; padding: var(--space-4);
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl); cursor: pointer;
+  color: var(--text-primary); text-align: left;
+  transition: all var(--duration-fast) var(--ease);
+  position: relative; overflow: hidden;
+}
+.start-card-btn::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--mod-fussball); }
+.start-card-btn:hover { transform: translateY(-2px); border-color: var(--border-club); box-shadow: var(--shadow-md); }
+.start-card-name { font-size: 15px; font-weight: 700; }
+.start-card-meta { font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary); }
+
 /* Kalender (aus Kabinski-Saison.html übernommen) */
 .cal-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-5); flex-wrap: wrap; }
 .cal-mode-pill { display: inline-flex; gap: 3px; background: var(--bg-surface-2); border: 1px solid var(--border-subtle); border-radius: var(--radius-full); padding: 4px; }

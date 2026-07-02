@@ -12,7 +12,13 @@ const capStyle: React.CSSProperties = {
   textTransform: "uppercase",
 };
 
-export function SessionExerciseCard({ exercise }: { exercise: WorkoutExerciseWithSets }) {
+export function SessionExerciseCard({
+  exercise,
+  prevSummary,
+}: {
+  exercise: WorkoutExerciseWithSets;
+  prevSummary?: string;
+}) {
   const submit = (e: FocusEvent<HTMLInputElement>) => e.currentTarget.form?.requestSubmit();
   const sets = [...exercise.sets_list].sort((a, b) => a.position - b.position);
 
@@ -26,8 +32,15 @@ export function SessionExerciseCard({ exercise }: { exercise: WorkoutExerciseWit
         marginBottom: "var(--space-3)",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-3)" }}>
-        <span style={{ fontWeight: 700, fontSize: 14 }}>{exercise.name}</span>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-3)", gap: 8 }}>
+        <div style={{ minWidth: 0 }}>
+          <span style={{ fontWeight: 700, fontSize: 14, display: "block" }}>{exercise.name}</span>
+          {prevSummary && (
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--text-tertiary)" }}>
+              Letztes Mal: {prevSummary}
+            </span>
+          )}
+        </div>
         <form action={deleteExercise}>
           <input type="hidden" name="id" value={exercise.id} />
           <button type="submit" className="btn ghost sm" title="Übung entfernen">
