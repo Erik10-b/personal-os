@@ -3,10 +3,7 @@
 import { useMemo, useState } from "react";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { WorkoutSessionWithExercises } from "@/lib/services/training";
-
-function formatWeight(kg: number) {
-  return kg % 1 === 0 ? kg.toFixed(0) : kg.toFixed(1);
-}
+import { bestSet, exerciseVolume, formatWeight } from "@/lib/trainingUtils";
 
 export function TrainingProgress({ sessions }: { sessions: WorkoutSessionWithExercises[] }) {
   const sorted = useMemo(
@@ -29,7 +26,7 @@ export function TrainingProgress({ sessions }: { sessions: WorkoutSessionWithExe
         .filter((ex) => ex.name === activeExercise)
         .map((ex) => ({
           date: new Date(s.session_date + "T00:00:00").toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }),
-          weight: ex.weight_kg,
+          weight: bestSet(ex).weight_kg,
         }))
     );
   }, [sorted, activeExercise]);
@@ -37,7 +34,7 @@ export function TrainingProgress({ sessions }: { sessions: WorkoutSessionWithExe
   const volumeData = useMemo(() => {
     return sorted.map((s) => ({
       date: new Date(s.session_date + "T00:00:00").toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }),
-      volume: s.exercises.reduce((sum, ex) => sum + ex.sets * ex.reps * ex.weight_kg, 0),
+      volume: s.exercises.reduce((sum, ex) => sum + exerciseVolume(ex), 0),
     }));
   }, [sorted]);
 

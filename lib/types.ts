@@ -146,6 +146,16 @@ export interface WorkoutExerciseRow {
   created_at: string;
 }
 
+export interface WorkoutSetRow {
+  id: string;
+  exercise_id: string;
+  user_id: string;
+  position: number;
+  reps: number;
+  weight_kg: number;
+  created_at: string;
+}
+
 export interface WorkoutTemplateRow {
   id: string;
   user_id: string;

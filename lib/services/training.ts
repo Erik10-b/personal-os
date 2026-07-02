@@ -1,8 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
-import { WorkoutExerciseRow, WorkoutSessionRow } from "@/lib/types";
+import { WorkoutExerciseRow, WorkoutSessionRow, WorkoutSetRow } from "@/lib/types";
+import { bestSet } from "@/lib/trainingUtils";
+
+export interface WorkoutExerciseWithSets extends WorkoutExerciseRow {
+  sets_list: WorkoutSetRow[];
+}
 
 export interface WorkoutSessionWithExercises extends WorkoutSessionRow {
-  exercises: WorkoutExerciseRow[];
+  exercises: WorkoutExerciseWithSets[];
 }
 
 export async function getWorkoutSessions(limit = 60): Promise<WorkoutSessionWithExercises[]> {
@@ -26,9 +31,23 @@ export async function getWorkoutSessions(limit = 60): Promise<WorkoutSessionWith
 
   if (exercisesError) throw exercisesError;
 
+  const exerciseIds = (exercises ?? []).map((e) => e.id);
+  let sets: WorkoutSetRow[] = [];
+  if (exerciseIds.length > 0) {
+    const { data: setsData, error: setsError } = await supabase
+      .from("workout_sets")
+      .select("*")
+      .in("exercise_id", exerciseIds)
+      .order("position", { ascending: true });
+    if (setsError) throw setsError;
+    sets = setsData ?? [];
+  }
+
   return sessions.map((session) => ({
     ...session,
-    exercises: (exercises ?? []).filter((e) => e.session_id === session.id),
+    exercises: (exercises ?? [])
+      .filter((e) => e.session_id === session.id)
+      .map((e) => ({ ...e, sets_list: sets.filter((s) => s.exercise_id === e.id) })),
   }));
 }
 
@@ -44,12 +63,14 @@ export function getPersonalBests(sessions: WorkoutSessionWithExercises[]): Perso
 
   for (const session of sessions) {
     for (const ex of session.exercises) {
+      const top = bestSet(ex);
+      if (!top) continue;
       const current = bests.get(ex.name);
-      if (!current || ex.weight_kg > current.weight_kg) {
+      if (!current || top.weight_kg > current.weight_kg) {
         bests.set(ex.name, {
           name: ex.name,
-          weight_kg: ex.weight_kg,
-          reps: ex.reps,
+          weight_kg: top.weight_kg,
+          reps: top.reps,
           achieved_on: session.session_date,
         });
       }
@@ -57,4 +78,14 @@ export function getPersonalBests(sessions: WorkoutSessionWithExercises[]): Perso
   }
 
   return Array.from(bests.values()).sort((a, b) => b.weight_kg - a.weight_kg);
+}
+
+/** Alle bisher verwendeten Übungsnamen (für Autocomplete/einheitliche Namen). */
+export function collectExerciseNames(
+  sessions: WorkoutSessionWithExercises[],
+  extra: string[] = []
+): string[] {
+  const set = new Set<string>(extra);
+  for (const s of sessions) for (const e of s.exercises) set.add(e.name);
+  return Array.from(set).sort((a, b) => a.localeCompare(b, "de"));
 }

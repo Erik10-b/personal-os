@@ -1,21 +1,13 @@
-import { getPersonalBests, getWorkoutSessions } from "@/lib/services/training";
+import { collectExerciseNames, getPersonalBests, getWorkoutSessions } from "@/lib/services/training";
 import { getTemplates } from "@/lib/services/trainingTemplates";
-import {
-  addExercise,
-  completeSession,
-  deleteSession,
-  reopenSession,
-  startSession,
-} from "@/lib/actions/training";
+import { addExercise, completeSession, deleteSession, reopenSession, startSession } from "@/lib/actions/training";
 import { addTemplateExercise, createTemplate, deleteTemplate } from "@/lib/actions/trainingTemplates";
 import { EmptyState } from "@/components/ui/Card";
 import { TrainingProgress } from "@/components/training/TrainingProgress";
-import { SessionExerciseRow } from "@/components/training/SessionExerciseRow";
+import { SessionExerciseCard } from "@/components/training/SessionExerciseCard";
+import { SessionNote } from "@/components/training/SessionNote";
 import { TemplateExerciseRow } from "@/components/training/TemplateExerciseRow";
-
-function formatWeight(kg: number) {
-  return kg % 1 === 0 ? kg.toFixed(0) : kg.toFixed(1);
-}
+import { formatSetsSummary, formatWeight } from "@/lib/trainingUtils";
 
 function formatDate(dateStr: string) {
   return new Date(dateStr + "T00:00:00").toLocaleDateString("de-DE", {
@@ -33,6 +25,10 @@ export default async function TrainingPage() {
 
   const openSessions = sessions.filter((s) => !s.completed_at);
   const doneSessions = sessions.filter((s) => s.completed_at);
+
+  // Übungsnamen für Autocomplete (einheitliche Namen): Vorlagen + bereits genutzte
+  const templateNames = templates.flatMap((t) => t.exercises.map((e) => e.name));
+  const exerciseNames = collectExerciseNames(sessions, templateNames);
 
   // Verlauf nach Kategorie (Titel) gruppieren, jüngste Kategorie zuerst
   const groupsMap = new Map<string, typeof doneSessions>();
@@ -113,39 +109,36 @@ export default async function TrainingPage() {
               {session.exercises.length === 0 ? (
                 <EmptyState>Noch keine Übungen — füge unten welche hinzu.</EmptyState>
               ) : (
-                <div style={{ marginBottom: "var(--space-4)" }}>
+                <div>
                   {session.exercises.map((ex) => (
-                    <SessionExerciseRow key={ex.id} ex={ex} />
+                    <SessionExerciseCard key={ex.id} exercise={ex} />
                   ))}
                 </div>
               )}
 
-              <form action={addExercise} style={{ display: "flex", gap: "var(--space-2)", alignItems: "flex-end", flexWrap: "wrap" }}>
+              <form action={addExercise} style={{ display: "flex", gap: "var(--space-2)", alignItems: "flex-end", flexWrap: "wrap", marginTop: "var(--space-2)" }}>
                 <input type="hidden" name="session_id" value={session.id} />
-                <div className="form-row" style={{ flex: 2, minWidth: 140 }}>
+                <div className="form-row" style={{ flex: 1, minWidth: 160 }}>
                   <label>Übung hinzufügen</label>
-                  <input className="input" name="name" placeholder="z.B. Bankdrücken" required />
-                </div>
-                <div className="form-row" style={{ maxWidth: 70 }}>
-                  <label>Sätze</label>
-                  <input className="input mono" name="sets" type="number" min="1" defaultValue={3} required />
-                </div>
-                <div className="form-row" style={{ maxWidth: 70 }}>
-                  <label>Wdh.</label>
-                  <input className="input mono" name="reps" type="number" min="1" defaultValue={8} required />
-                </div>
-                <div className="form-row" style={{ maxWidth: 90 }}>
-                  <label>Gewicht (kg)</label>
-                  <input className="input mono" name="weight_kg" type="number" min="0" step="0.5" defaultValue={0} required />
+                  <input className="input" name="name" placeholder="Übung wählen/eingeben" list="exercise-names" required />
                 </div>
                 <button type="submit" className="btn secondary sm">
-                  + Übung
+                  + Übung (2 Sätze)
                 </button>
               </form>
+
+              <SessionNote sessionId={session.id} note={session.note} />
             </div>
           ))}
         </div>
       )}
+
+      {/* Autocomplete-Liste für einheitliche Übungsnamen */}
+      <datalist id="exercise-names">
+        {exerciseNames.map((name) => (
+          <option key={name} value={name} />
+        ))}
+      </datalist>{" "}
 
       {/* ===== Vorlagen (feste Anzeige, Bearbeiten einklappbar) ===== */}
       <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 var(--space-4)" }}>Vorlagen</h2>
@@ -287,18 +280,14 @@ export default async function TrainingPage() {
                           <thead>
                             <tr>
                               <th>Übung</th>
-                              <th>Sätze</th>
-                              <th>Wdh.</th>
-                              <th>Gewicht</th>
+                              <th>Sätze (kg×Wdh.)</th>
                             </tr>
                           </thead>
                           <tbody>
                             {session.exercises.map((ex) => (
                               <tr key={ex.id}>
                                 <td>{ex.name}</td>
-                                <td className="mono">{ex.sets}</td>
-                                <td className="mono">{ex.reps}</td>
-                                <td className="mono">{formatWeight(ex.weight_kg)} kg</td>
+                                <td className="mono">{formatSetsSummary(ex)}</td>
                               </tr>
                             ))}
                           </tbody>
