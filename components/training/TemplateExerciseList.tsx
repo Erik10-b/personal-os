@@ -75,13 +75,13 @@ export function TemplateExerciseList({
           key={ex.id}
           data-row-id={ex.id}
           style={{
+            position: "relative",
             display: "flex",
-            alignItems: "center",
             gap: 6,
             background: "var(--bg-surface-2)",
             border: "1px solid var(--border-subtle)",
             borderRadius: "var(--radius-md)",
-            padding: "6px 8px",
+            padding: "8px 10px",
             opacity: draggingId === ex.id ? 0.45 : 1,
           }}
         >
@@ -93,11 +93,14 @@ export function TemplateExerciseList({
               (e.target as HTMLElement).setPointerCapture(e.pointerId);
             }}
             style={{
+              alignSelf: "stretch",
+              display: "flex",
+              alignItems: "center",
               cursor: "grab",
               color: "var(--text-tertiary)",
               fontSize: 15,
               lineHeight: 1,
-              padding: "6px 4px",
+              padding: "0 4px",
               touchAction: "none",
               userSelect: "none",
               flexShrink: 0,
@@ -109,7 +112,7 @@ export function TemplateExerciseList({
 
           <form
             action={updateTemplateExercise}
-            style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}
+            style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 6, paddingRight: 26 }}
           >
             <input type="hidden" name="id" value={ex.id} />
             <input
@@ -118,44 +121,46 @@ export function TemplateExerciseList({
               defaultValue={ex.name}
               onBlur={submit}
               placeholder="Übung"
-              style={{ flex: 1, minWidth: 0, fontSize: 12.5, fontWeight: 600, padding: "6px 8px" }}
+              style={{ width: "100%", fontSize: 12.5, fontWeight: 600, padding: "6px 8px" }}
             />
-            <input
-              className="input mono"
-              name="default_sets"
-              type="number"
-              min="1"
-              defaultValue={ex.default_sets}
-              onBlur={submit}
-              style={numStyle}
-              title="Sätze"
-            />
-            <span style={sepStyle}>×</span>
-            <input
-              className="input mono"
-              name="default_reps"
-              type="number"
-              min="1"
-              defaultValue={ex.default_reps}
-              onBlur={submit}
-              style={numStyle}
-              title="Wdh."
-            />
-            <span style={sepStyle}>@</span>
-            <input
-              className="input mono"
-              name="default_weight_kg"
-              type="number"
-              min="0"
-              step="0.25"
-              defaultValue={ex.default_weight_kg}
-              onBlur={submit}
-              style={{ ...numStyle, width: 44 }}
-              title="kg"
-            />
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <input
+                className="input mono"
+                name="default_sets"
+                type="number"
+                min="1"
+                defaultValue={ex.default_sets}
+                onBlur={submit}
+                style={numStyle}
+                title="Sätze"
+              />
+              <span style={sepStyle}>×</span>
+              <input
+                className="input mono"
+                name="default_reps"
+                type="number"
+                min="1"
+                defaultValue={ex.default_reps}
+                onBlur={submit}
+                style={numStyle}
+                title="Wdh."
+              />
+              <span style={sepStyle}>@</span>
+              <input
+                className="input mono"
+                name="default_weight_kg"
+                type="number"
+                min="0"
+                step="0.25"
+                defaultValue={ex.default_weight_kg}
+                onBlur={submit}
+                style={{ ...numStyle, width: 48 }}
+                title="kg"
+              />
+            </div>
           </form>
 
-          <form action={deleteTemplateExercise}>
+          <form action={deleteTemplateExercise} style={{ position: "absolute", top: 8, right: 8 }}>
             <input type="hidden" name="id" value={ex.id} />
             <button
               type="submit"
