@@ -31,14 +31,38 @@ export async function addTemplateExercise(formData: FormData) {
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) throw new Error("Nicht angemeldet");
 
+  const templateId = String(formData.get("template_id"));
+  const { data: last } = await supabase
+    .from("workout_template_exercises")
+    .select("order_index")
+    .eq("template_id", templateId)
+    .order("order_index", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   const { error } = await supabase.from("workout_template_exercises").insert({
-    template_id: String(formData.get("template_id")),
+    template_id: templateId,
     user_id: userData.user.id,
     name: String(formData.get("name")),
     default_sets: Math.max(1, Math.round(Number(formData.get("default_sets") ?? 3))),
     default_reps: Math.max(1, Math.round(Number(formData.get("default_reps") ?? 8))),
     default_weight_kg: Math.max(0, Number(formData.get("default_weight_kg") ?? 0)),
+    order_index: (last?.order_index ?? -1) + 1,
   });
+
+  if (error) throw error;
+  revalidatePath("/training");
+}
+
+/** Persistiert eine neue Reihenfolge (Drag & Drop) als order_index je Übung. */
+export async function reorderTemplateExercises(orderedIds: string[]) {
+  const supabase = await createClient();
+
+  const { error } = await Promise.all(
+    orderedIds.map((id, index) =>
+      supabase.from("workout_template_exercises").update({ order_index: index }).eq("id", id)
+    )
+  ).then((results) => ({ error: results.find((r) => r.error)?.error ?? null }));
 
   if (error) throw error;
   revalidatePath("/training");

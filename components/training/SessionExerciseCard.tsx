@@ -69,7 +69,7 @@ export function SessionExerciseCard({
               name="weight_kg"
               type="number"
               min="0"
-              step="0.5"
+              step="0.25"
               inputMode="decimal"
               defaultValue={set.weight_kg}
               onBlur={submit}

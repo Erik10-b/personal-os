@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/ui/Card";
 import { TrainingProgress } from "@/components/training/TrainingProgress";
 import { SessionExerciseCard } from "@/components/training/SessionExerciseCard";
 import { SessionNote } from "@/components/training/SessionNote";
-import { TemplateExerciseRow } from "@/components/training/TemplateExerciseRow";
+import { TemplateExerciseList } from "@/components/training/TemplateExerciseList";
 import { formatSetsSummary, formatWeight, lastPerformanceByName } from "@/lib/trainingUtils";
 import type { PersonalBest } from "@/lib/services/training";
 
@@ -380,11 +380,9 @@ function VorlagenTab({ templates }: { templates: WorkoutTemplateWithExercises[] 
             </summary>
             <div style={{ marginTop: "var(--space-3)", display: "flex", flexDirection: "column", gap: 6 }}>
               <div style={{ fontSize: 10, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)" }}>
-                Änderungen werden automatisch gespeichert.
+                Ziehe am Griff, um Übungen umzusortieren. Änderungen werden automatisch gespeichert.
               </div>
-              {template.exercises.map((ex) => (
-                <TemplateExerciseRow key={ex.id} ex={ex} />
-              ))}
+              <TemplateExerciseList templateId={template.id} exercises={template.exercises} />
 
               <form
                 action={addTemplateExercise}
@@ -411,7 +409,7 @@ function VorlagenTab({ templates }: { templates: WorkoutTemplateWithExercises[] 
                   </label>
                   <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
                     <span style={{ fontSize: 9, color: "var(--text-tertiary)", fontFamily: "var(--font-mono)", textTransform: "uppercase" }}>kg</span>
-                    <input className="input mono" name="default_weight_kg" type="number" min="0" step="0.5" defaultValue={0} style={{ width: "100%", textAlign: "center", padding: "7px 4px", fontSize: 12 }} />
+                    <input className="input mono" name="default_weight_kg" type="number" min="0" step="0.25" defaultValue={0} style={{ width: "100%", textAlign: "center", padding: "7px 4px", fontSize: 12 }} />
                   </label>
                   <button type="submit" className="btn secondary sm" style={{ flexShrink: 0 }}>
                     +
