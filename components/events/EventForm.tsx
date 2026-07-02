@@ -4,11 +4,28 @@ import { Modal } from "@/components/ui/Modal";
 import { EventArea, EventRow } from "@/lib/types";
 import { createEvent, deleteEvent, updateEvent } from "@/lib/actions/events";
 
-function toLocalInputValue(iso: string | null): string {
+const CATEGORIES: { label: string; color: string }[] = [
+  { label: "Persönlich", color: "var(--purple)" },
+  { label: "Arbeit", color: "var(--orange)" },
+  { label: "Uni", color: "var(--blue-bright)" },
+  { label: "Event", color: "var(--warning)" },
+  { label: "Fußball", color: "var(--success)" },
+];
+
+function pad(n: number) {
+  return String(n).padStart(2, "0");
+}
+
+function toLocalDate(iso: string | null): string {
   if (!iso) return "";
   const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function toLocalTime(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 export function EventForm({
@@ -23,8 +40,27 @@ export function EventForm({
   onClose: () => void;
 }) {
   const isEdit = Boolean(event);
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+
+  const startDate = toLocalDate(event?.starts_at ?? null) || defaultDate || todayStr;
+  const startTime = toLocalTime(event?.starts_at ?? null) || "09:00";
+  const endDate = toLocalDate(event?.ends_at ?? null);
+  const endTime = toLocalTime(event?.ends_at ?? null);
 
   async function action(formData: FormData) {
+    // Datum + Uhrzeit clientseitig zu echten UTC-Zeitpunkten kombinieren,
+    // damit die Uhrzeit unabhängig von der Server-Zeitzone stimmt.
+    const sDate = String(formData.get("start_date"));
+    const sTime = String(formData.get("start_time") || "09:00");
+    formData.set("starts_at", new Date(`${sDate}T${sTime}`).toISOString());
+
+    const eDate = String(formData.get("end_date") || "");
+    if (eDate) {
+      const eTime = String(formData.get("end_time") || sTime);
+      formData.set("ends_at", new Date(`${eDate}T${eTime}`).toISOString());
+    }
+
     if (isEdit) {
       await updateEvent(formData);
     } else {
@@ -74,54 +110,80 @@ export function EventForm({
             id="title"
             name="title"
             required
+            autoFocus={!isEdit}
             defaultValue={event?.title}
-            placeholder={area === "fussball" ? "z.B. Training, Heimspiel" : "z.B. Zahnarzt"}
+            placeholder="z.B. Zahnarzt, Heimspiel, Klausur"
           />
         </div>
 
         <div className="form-row">
-          <label htmlFor="starts_at">
-            Start <span className="req">*</span>
-          </label>
-          <input
-            className="input mono"
-            id="starts_at"
-            name="starts_at"
-            type="datetime-local"
-            required
-            defaultValue={toLocalInputValue(event?.starts_at ?? null) || (defaultDate ? `${defaultDate}T09:00` : "")}
-          />
+          <label>Kategorie</label>
+          <div className="choice-pills">
+            {CATEGORIES.map((cat) => (
+              <label
+                key={cat.label}
+                className="choice-pill"
+                style={{ "--pill-color": cat.color } as React.CSSProperties}
+              >
+                <input
+                  type="radio"
+                  name="category"
+                  value={cat.label}
+                  defaultChecked={(event?.category ?? "Persönlich") === cat.label}
+                />
+                <span className="dot" />
+                {cat.label}
+              </label>
+            ))}
+          </div>
         </div>
 
-        <div className="form-row">
-          <label htmlFor="ends_at">Ende</label>
-          <input
-            className="input mono"
-            id="ends_at"
-            name="ends_at"
-            type="datetime-local"
-            defaultValue={toLocalInputValue(event?.ends_at ?? null)}
-          />
+        <div style={{ display: "flex", gap: "var(--space-3)" }}>
+          <div className="form-row" style={{ flex: 1.4 }}>
+            <label htmlFor="start_date">
+              Datum <span className="req">*</span>
+            </label>
+            <input className="input mono" id="start_date" name="start_date" type="date" required defaultValue={startDate} />
+          </div>
+          <div className="form-row" style={{ flex: 1 }}>
+            <label htmlFor="start_time">Uhrzeit</label>
+            <input className="input mono" id="start_time" name="start_time" type="time" defaultValue={startTime} />
+          </div>
         </div>
 
-        <div className="form-row">
-          <label htmlFor="category">Kategorie</label>
-          <select className="input" id="category" name="category" defaultValue={event?.category ?? "Persönlich"}>
-            <option value="Persönlich">Persönlich</option>
-            <option value="Arbeit">Arbeit</option>
-            <option value="Uni">Uni</option>
-            <option value="Event">Event</option>
-            <option value="Fußball">Fußball</option>
-          </select>
-        </div>
+        <details open={Boolean(event?.ends_at)}>
+          <summary
+            style={{
+              cursor: "pointer",
+              fontSize: 11.5,
+              color: "var(--text-tertiary)",
+              fontFamily: "var(--font-mono)",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              marginBottom: 4,
+            }}
+          >
+            Ende / mehrtägig
+          </summary>
+          <div style={{ display: "flex", gap: "var(--space-3)", marginTop: "var(--space-2)" }}>
+            <div className="form-row" style={{ flex: 1.4 }}>
+              <label htmlFor="end_date">End-Datum</label>
+              <input className="input mono" id="end_date" name="end_date" type="date" defaultValue={endDate} />
+            </div>
+            <div className="form-row" style={{ flex: 1 }}>
+              <label htmlFor="end_time">End-Uhrzeit</label>
+              <input className="input mono" id="end_time" name="end_time" type="time" defaultValue={endTime} />
+            </div>
+          </div>
+        </details>
 
         <div className="form-row">
           <label htmlFor="note">Notiz</label>
-          <textarea className="textarea" id="note" name="note" defaultValue={event?.note ?? ""} />
+          <textarea className="textarea" id="note" name="note" defaultValue={event?.note ?? ""} placeholder="optional" />
         </div>
 
-        <button type="submit" className="btn primary block">
-          {isEdit ? "Speichern" : "Anlegen"}
+        <button type="submit" className="btn primary block" style={{ minHeight: 46 }}>
+          {isEdit ? "Speichern" : "Termin anlegen"}
         </button>
       </form>
     </Modal>

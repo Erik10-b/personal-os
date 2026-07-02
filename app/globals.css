@@ -454,6 +454,26 @@ main { min-width: 0; }
 @media (min-width: 880px) { .login-image { display: block; } }
 .login-form-side { flex: 1; display: flex; align-items: center; justify-content: center; padding: var(--space-6); }
 
+/* Auswahl-Pills (Radio als farbige Chips, z.B. Termin-Kategorie) */
+.choice-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.choice-pill {
+  position: relative; display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 14px; min-height: 38px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: var(--bg-surface-2);
+  font-size: 12px; font-weight: 600; color: var(--text-secondary);
+  cursor: pointer; transition: all var(--duration-fast) var(--ease);
+}
+.choice-pill input { position: absolute; opacity: 0; pointer-events: none; }
+.choice-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pill-color, var(--club)); flex-shrink: 0; }
+.choice-pill:hover { color: var(--text-primary); border-color: var(--border-strong); }
+.choice-pill:has(input:checked) {
+  border-color: var(--pill-color, var(--club));
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--pill-color, var(--club)) 13%, transparent);
+}
+
 /* Training · aktive Session */
 .session-actionbar {
   position: sticky; bottom: 12px; z-index: 5;
