@@ -52,10 +52,21 @@ export function CalendarView({
   const eventsByDay = useMemo(() => {
     const map = new Map<string, EventRow[]>();
     for (const event of events) {
-      const key = toDateKey(new Date(event.starts_at));
-      const list = map.get(key) ?? [];
-      list.push(event);
-      map.set(key, list);
+      const start = new Date(event.starts_at);
+      // Enddatum: falls gesetzt, bis dahin (inkl.), sonst nur der Starttag
+      const end = event.ends_at ? new Date(event.ends_at) : start;
+      const cursorDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+      const lastDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+      // Sicherheitslimit gegen fehlerhafte Daten
+      let guard = 0;
+      while (cursorDay <= lastDay && guard < 400) {
+        const key = toDateKey(cursorDay);
+        const list = map.get(key) ?? [];
+        list.push(event);
+        map.set(key, list);
+        cursorDay.setDate(cursorDay.getDate() + 1);
+        guard++;
+      }
     }
     return map;
   }, [events]);

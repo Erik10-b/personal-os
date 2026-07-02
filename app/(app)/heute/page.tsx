@@ -182,23 +182,59 @@ export default async function HeutePage() {
             {data.habits.length === 0 ? (
               <EmptyState>Keine Habits angelegt.</EmptyState>
             ) : (
-              <div className="card-list">
-                {data.habits.map(({ habit, doneToday }) => (
-                  <div
-                    key={habit.id}
-                    style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", opacity: doneToday ? 0.6 : 1 }}
-                  >
-                    <form action={toggleHabitLog}>
-                      <input type="hidden" name="habit_id" value={habit.id} />
-                      <input type="hidden" name="log_date" value={data.todayStr} />
-                      <input type="hidden" name="checked" value={String(doneToday)} />
-                      <button type="submit" className={`checkbox ${doneToday ? "checked" : ""}`} aria-label="heute erledigt" />
-                    </form>
-                    <span style={{ flex: 1, fontSize: 13, textDecoration: doneToday ? "line-through" : "none" }}>
-                      {habit.name}
-                    </span>
-                  </div>
-                ))}
+              <div>
+                {/* Kopfzeile: 4 Tage (vorgestern, gestern, heute, morgen) */}
+                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", marginBottom: 6 }}>
+                  <span style={{ flex: 1 }} />
+                  {data.habitDays.map((day) => {
+                    const isToday = day === data.todayStr;
+                    const label = new Date(day + "T00:00:00").toLocaleDateString("de-DE", { weekday: "short" });
+                    return (
+                      <span
+                        key={day}
+                        style={{
+                          width: 30,
+                          textAlign: "center",
+                          fontFamily: "var(--font-mono)",
+                          fontSize: 9,
+                          textTransform: "uppercase",
+                          color: isToday ? "var(--club)" : "var(--text-tertiary)",
+                          fontWeight: isToday ? 700 : 500,
+                        }}
+                      >
+                        {label}
+                      </span>
+                    );
+                  })}
+                </div>
+
+                <div className="card-list">
+                  {data.habits.map(({ habit, doneByDate }) => (
+                    <div key={habit.id} style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+                      <span style={{ flex: 1, fontSize: 13, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {habit.name}
+                      </span>
+                      {data.habitDays.map((day) => {
+                        const checked = doneByDate[day];
+                        const isToday = day === data.todayStr;
+                        return (
+                          <form key={day} action={toggleHabitLog} style={{ width: 30, display: "flex", justifyContent: "center" }}>
+                            <input type="hidden" name="habit_id" value={habit.id} />
+                            <input type="hidden" name="log_date" value={day} />
+                            <input type="hidden" name="checked" value={String(checked)} />
+                            <button
+                              type="submit"
+                              className={`habit-cell${checked ? " done" : ""}`}
+                              title={`${habit.name} · ${new Date(day + "T00:00:00").toLocaleDateString("de-DE")}`}
+                              aria-label={`${day}${checked ? " erledigt" : ""}`}
+                              style={isToday ? { boxShadow: "0 0 0 2px var(--border-club)" } : undefined}
+                            />
+                          </form>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
