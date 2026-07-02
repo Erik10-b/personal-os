@@ -6,6 +6,12 @@ export function HabitMatrix({ habits, days }: { habits: HabitWithLogs[]; days: s
   const dayLabels = days.map((d) => new Date(d + "T00:00:00").getDate().toString().padStart(2, "0"));
   const todayKey = getTodayKey();
 
+  // Mobile: nur 4 Tage um "heute" (vorgestern..morgen) sichtbar, Rest per CSS ausgeblendet
+  const todayIdx = days.indexOf(todayKey);
+  const mobileStart = todayIdx === -1 ? Math.max(0, days.length - 4) : Math.max(0, todayIdx - 2);
+  const mobileEnd = todayIdx === -1 ? days.length : Math.min(days.length, todayIdx + 2);
+  const isMobileVisible = (i: number) => i >= mobileStart && i < mobileEnd;
+
   return (
     <div className="card" style={{ minWidth: 0 }}>
       <div className="habit-matrix-hd">
@@ -30,7 +36,12 @@ export function HabitMatrix({ habits, days }: { habits: HabitWithLogs[]; days: s
             <tr>
               <th className="hm-th-name">HABIT</th>
               {dayLabels.map((label, i) => (
-                <th key={i} className={`hm-th-day${days[i] === todayKey ? " today" : ""}`}>{label}</th>
+                <th
+                  key={i}
+                  className={`hm-th-day${days[i] === todayKey ? " today" : ""}${!isMobileVisible(i) ? " hm-mobile-hide" : ""}`}
+                >
+                  {label}
+                </th>
               ))}
               <th className="hm-th-day" />
             </tr>
@@ -43,11 +54,14 @@ export function HabitMatrix({ habits, days }: { habits: HabitWithLogs[]; days: s
                   <td className="hm-td-name">
                     <span className="hm-habit-name">{habit.name}</span>
                   </td>
-                  {days.map((day) => {
+                  {days.map((day, i) => {
                     const checked = logDates.has(day);
                     const isToday = day === todayKey;
                     return (
-                      <td key={day} className={`hm-td-cell${isToday ? " today" : ""}`}>
+                      <td
+                        key={day}
+                        className={`hm-td-cell${isToday ? " today" : ""}${!isMobileVisible(i) ? " hm-mobile-hide" : ""}`}
+                      >
                         <form action={toggleHabitLog} style={{ display: "block", width: "100%", lineHeight: 0 }}>
                           <input type="hidden" name="habit_id" value={habit.id} />
                           <input type="hidden" name="log_date" value={day} />
