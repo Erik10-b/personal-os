@@ -1,3 +1,4 @@
+import { localDateKey } from "@/lib/dateUtils";
 import { createClient } from "@/lib/supabase/server";
 import { MealRow } from "@/lib/types";
 
@@ -33,7 +34,7 @@ export async function getMealDays(days = 30): Promise<{ date: string; meals: Mea
   const { data, error } = await supabase
     .from("meals")
     .select("*")
-    .gte("eaten_on", since.toISOString().slice(0, 10))
+    .gte("eaten_on", localDateKey(since))
     .order("eaten_on", { ascending: false })
     .order("created_at", { ascending: true });
 

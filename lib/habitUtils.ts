@@ -1,10 +1,10 @@
+import { addDays, localDateKey } from "@/lib/dateUtils";
+
 export function getLastNDays(n: number): string[] {
+  const now = new Date();
   const days: string[] = [];
-  const d = new Date();
   for (let i = n - 1; i >= 0; i--) {
-    const day = new Date(d);
-    day.setDate(d.getDate() - i);
-    days.push(day.toISOString().slice(0, 10));
+    days.push(localDateKey(addDays(now, -i)));
   }
   return days;
 }
@@ -14,8 +14,7 @@ export function getCurrentMonthDays(): string[] {
   const now = new Date();
   const days: string[] = [];
   for (let d = 1; d <= now.getDate(); d++) {
-    const day = new Date(now.getFullYear(), now.getMonth(), d);
-    days.push(day.toISOString().slice(0, 10));
+    days.push(localDateKey(new Date(now.getFullYear(), now.getMonth(), d)));
   }
   return days;
 }
@@ -26,13 +25,12 @@ export function getCurrentMonthAllDays(): string[] {
   const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
   const days: string[] = [];
   for (let d = 1; d <= lastDay; d++) {
-    const day = new Date(now.getFullYear(), now.getMonth(), d);
-    days.push(day.toISOString().slice(0, 10));
+    days.push(localDateKey(new Date(now.getFullYear(), now.getMonth(), d)));
   }
   return days;
 }
 
 /** Heutiges Datum als YYYY-MM-DD (lokale Zeit). */
 export function getTodayKey(): string {
-  return new Date().toISOString().slice(0, 10);
+  return localDateKey();
 }

@@ -1,3 +1,4 @@
+import { localDateKey } from "@/lib/dateUtils";
 import Link from "next/link";
 import {
   expensesByCategory,
@@ -23,7 +24,7 @@ export default async function FinanziellesPage() {
   const trend = monthlyTrend(transactions);
   const netWorthSnapshots = await getNetWorthSnapshots();
   const latestNetWorth = netWorthSnapshots[netWorthSnapshots.length - 1];
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDateKey();
 
   return (
     <>

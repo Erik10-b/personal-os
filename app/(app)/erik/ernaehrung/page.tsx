@@ -3,10 +3,12 @@ import { getMealsForDate, sumMacros } from "@/lib/services/meals";
 import { createMeal, deleteMeal } from "@/lib/actions/meals";
 import { EmptyState } from "@/components/ui/Card";
 
+import { localDateKey } from "@/lib/dateUtils";
+
 function shiftDate(date: string, days: number) {
   const d = new Date(date + "T00:00:00");
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  return localDateKey(d);
 }
 
 export default async function ErnaehrungPage({
@@ -15,7 +17,7 @@ export default async function ErnaehrungPage({
   searchParams: Promise<{ date?: string }>;
 }) {
   const { date } = await searchParams;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDateKey();
   const activeDate = date ?? today;
 
   const meals = await getMealsForDate(activeDate);

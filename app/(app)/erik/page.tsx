@@ -1,3 +1,4 @@
+import { localDateKey } from "@/lib/dateUtils";
 import { getHabitsWithLogs } from "@/lib/services/habits";
 import { getWeightLogs } from "@/lib/services/weight";
 import { getTodos } from "@/lib/services/todos";
@@ -35,7 +36,7 @@ function SectionHead({ title, linkHref, linkLabel }: { title: string; linkHref?:
 }
 
 export default async function ErikPage() {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDateKey();
 
   const [habits, weightLogs, todos, weekGoals, monthGoals, todayMeals] = await Promise.all([
     getHabitsWithLogs(31),

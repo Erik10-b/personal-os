@@ -1,10 +1,11 @@
+import { localDateKey } from "@/lib/dateUtils";
 import { getWeightLogs } from "@/lib/services/weight";
 import { logWeight } from "@/lib/actions/weight";
 import { WeightLineChart } from "@/components/charts/WeightLineChart";
 
 export default async function GewichtPage() {
   const logs = await getWeightLogs();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDateKey();
   const latest = logs[logs.length - 1];
 
   return (

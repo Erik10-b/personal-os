@@ -1,3 +1,4 @@
+import { localDateKey } from "@/lib/dateUtils";
 import { createClient } from "@/lib/supabase/server";
 import { HabitLogRow, HabitRow } from "@/lib/types";
 
@@ -23,7 +24,7 @@ export async function getHabitsWithLogs(days = 28): Promise<HabitWithLogs[]> {
   const { data: logs, error: logsError } = await supabase
     .from("habit_logs")
     .select("*")
-    .gte("log_date", since.toISOString().slice(0, 10));
+    .gte("log_date", localDateKey(since));
 
   if (logsError) throw logsError;
 

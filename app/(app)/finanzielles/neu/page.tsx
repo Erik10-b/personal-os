@@ -1,7 +1,8 @@
 import { createTransaction } from "@/lib/actions/transactions";
+import { localDateKey } from "@/lib/dateUtils";
 
 export default function NeueTransaktionPage() {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDateKey();
 
   return (
     <>

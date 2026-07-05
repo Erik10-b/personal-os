@@ -1,3 +1,4 @@
+import { localDateKey } from "@/lib/dateUtils";
 import Link from "next/link";
 import { getDashboardData } from "@/lib/services/dashboard";
 import { getRecentActivity } from "@/lib/services/activity";
@@ -28,7 +29,7 @@ function formatEuro(cents: number) {
 }
 
 export default async function HeutePage() {
-  const todayStr0 = new Date().toISOString().slice(0, 10);
+  const todayStr0 = localDateKey();
   const [data, activity, netWorthSnapshots, weekGoals, todayMeals] = await Promise.all([
     getDashboardData(),
     getRecentActivity(8),
@@ -162,15 +163,18 @@ export default async function HeutePage() {
               <EmptyState>Keine Termine heute.</EmptyState>
             ) : (
               <div className="card-list">
-                {data.todayEvents.map((event) => (
-                  <div key={event.id} style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--club)", minWidth: 44 }}>
-                      {formatTime(event.starts_at)}
-                    </span>
-                    <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{event.title}</span>
-                    {event.category && <span className="badge neutral">{event.category}</span>}
-                  </div>
-                ))}
+                {data.todayEvents.map((event) => {
+                  const startedEarlier = localDateKey(new Date(event.starts_at)) < data.todayStr;
+                  return (
+                    <div key={event.id} style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--club)", minWidth: 44 }}>
+                        {startedEarlier ? "läuft" : formatTime(event.starts_at)}
+                      </span>
+                      <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{event.title}</span>
+                      {event.category && <span className="badge neutral">{event.category}</span>}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

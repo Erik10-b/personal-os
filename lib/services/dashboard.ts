@@ -19,10 +19,7 @@ export interface DashboardData {
   todayStr: string;
 }
 
-function localDateStr(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
+import { localDateKey as localDateStr } from "@/lib/dateUtils";
 
 export async function getDashboardData(): Promise<DashboardData> {
   const supabase = await createClient();
@@ -44,11 +41,14 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   const [eventsRes, todosRes, keyTodosRes, habitsRes, habitLogsRes, weightRes, txRes] =
     await Promise.all([
+      // Alle Termine, die heute berühren — auch mehrtägige, die früher begonnen haben
       supabase
         .from("events")
         .select("*")
-        .gte("starts_at", startOfDay.toISOString())
         .lt("starts_at", endOfDay.toISOString())
+        .or(
+          `ends_at.gte.${startOfDay.toISOString()},and(ends_at.is.null,starts_at.gte.${startOfDay.toISOString()})`
+        )
         .order("starts_at", { ascending: true }),
       supabase
         .from("todos")

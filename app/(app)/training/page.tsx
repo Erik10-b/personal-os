@@ -1,3 +1,4 @@
+import { localDateKey } from "@/lib/dateUtils";
 import Link from "next/link";
 import { collectExerciseNames, getPersonalBests, getWorkoutSessions } from "@/lib/services/training";
 import type { WorkoutSessionWithExercises } from "@/lib/services/training";
@@ -33,7 +34,7 @@ export default async function TrainingPage({
   const tab: Tab =
     rawTab === "verlauf" || rawTab === "fortschritt" || rawTab === "vorlagen" ? rawTab : "log";
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDateKey();
   const [sessions, templates] = await Promise.all([getWorkoutSessions(150), getTemplates()]);
 
   const openSessions = sessions.filter((s) => !s.completed_at);
