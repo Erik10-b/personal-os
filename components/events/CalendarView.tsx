@@ -18,7 +18,7 @@ function pillClassFor(event: EventRow): string {
   if (cat.includes("fußball") || cat.includes("fussball")) return "spiel";
   if (cat.includes("uni")) return "training";
   if (cat.includes("persönlich") || cat.includes("persoenlich")) return "geburtstag";
-  if (cat.includes("arbeit")) return "event";
+  if (cat.includes("arbeit")) return "arbeit";
   return "event";
 }
 
