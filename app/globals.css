@@ -811,6 +811,41 @@ main { min-width: 0; }
 .habit-year-fill.current { background: var(--club); }
 .habit-year-label { font-family: var(--font-mono); font-size: 9px; color: var(--text-tertiary); text-transform: uppercase; }
 
+/* Strichliste */
+.strichliste-shell { max-width: 720px; margin: 0 auto; padding: var(--space-6) var(--space-4) var(--space-16); }
+.name-grid { display: grid; gap: var(--space-3); grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 520px) { .name-grid { grid-template-columns: repeat(4, 1fr); } }
+.name-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  min-height: 84px; padding: var(--space-4);
+  background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl);
+  cursor: pointer; transition: all var(--duration-fast) var(--ease); user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.name-btn:hover { border-color: var(--border-club); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.name-btn:active { transform: translateY(0) scale(0.97); background: var(--club-glow-2); }
+.name-btn-label { font-size: 13px; font-weight: 700; color: var(--text-primary); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.name-btn-count { font-family: var(--font-mono); font-feature-settings: "tnum" 1; font-size: 20px; font-weight: 700; color: var(--club); }
+
+.row-name { display: inline-flex; align-items: center; gap: 8px; }
+.edit-name-btn { background: transparent; border: none; color: var(--text-tertiary); cursor: pointer; font-size: 12px; padding: 2px; border-radius: 4px; }
+.edit-name-btn:hover { color: var(--club); background: var(--club-glow-2); }
+
+.tally-marks { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tally-empty { color: var(--text-tertiary); font-family: var(--font-mono); }
+.tally-bundle { position: relative; display: inline-block; width: 16px; height: 18px; flex-shrink: 0; }
+.tally-bundle.partial { width: auto; }
+.tally-bundle .tally-stroke { position: absolute; top: 0; width: 2px; height: 18px; background: var(--club); border-radius: 1px; }
+.tally-bundle .s1 { left: 0px; }
+.tally-bundle .s2 { left: 4px; }
+.tally-bundle .s3 { left: 8px; }
+.tally-bundle .s4 { left: 12px; }
+.tally-bundle .s5 { left: -1px; top: 1px; width: 18px; height: 2px; transform: rotate(-32deg); transform-origin: left center; background: var(--orange); }
+.tally-bundle.partial .tally-stroke { position: static; display: inline-block; margin-right: 3px; }
+
+.strichliste-footer { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-top: var(--space-6); }
+.strichliste-total { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--text-primary); }
+
 /* Tageslogs */
 .habit-daylog { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-3) 0; border-bottom: 1px solid var(--border-subtle); }
 .habit-daylog:last-child { border-bottom: none; }
