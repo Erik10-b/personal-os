@@ -1,7 +1,7 @@
 import { ThemeToggle } from "@/components/nav/ThemeToggle";
 
 export const metadata = {
-  title: "Padel BCN",
+  title: "Padel Urlaub",
   description: "Team-Auslosung, Ergebnisse und Rangliste für das Padel-Turnier in Barcelona.",
 };
 
@@ -11,9 +11,9 @@ export default function PadelLayout({ children }: { children: React.ReactNode })
       <header className="app-header">
         <div className="header-inner">
           <div className="brand">
-            <div className="brand-mark">🎾</div>
+            <div className="brand-mark">🇪🇸</div>
             <div className="brand-block">
-              <span className="brand-name">Padel BCN</span>
+              <span className="brand-name">Padel Urlaub</span>
               <span className="brand-meta">BARCELONA · ESPAÑA</span>
             </div>
           </div>

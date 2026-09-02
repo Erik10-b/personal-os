@@ -17,6 +17,53 @@ type Tab = "start" | "spieler" | "runde" | "rangliste";
 type TeamColor = "club" | "orange" | "blue" | "purple";
 const TEAM_COLORS: TeamColor[] = ["club", "orange", "blue", "purple"];
 
+const ICON_PROPS = {
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.8,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+};
+
+const TAB_ICONS: Record<Tab, React.ReactElement> = {
+  start: (
+    <svg {...ICON_PROPS}>
+      <path d="M3 11l9-8 9 8" />
+      <path d="M5 10v10h14V10" />
+    </svg>
+  ),
+  spieler: (
+    <svg {...ICON_PROPS}>
+      <circle cx="9" cy="8" r="3" />
+      <path d="M2 20a7 7 0 0 1 14 0" />
+      <path d="M16 4a3 3 0 0 1 0 6" />
+      <path d="M17 14a5 5 0 0 1 5 5" />
+    </svg>
+  ),
+  runde: (
+    <svg {...ICON_PROPS}>
+      <path d="M3 6h3.5c1.6 0 3 1 3.7 2.4" />
+      <path d="M3 18h3.5c1.6 0 3-1 3.7-2.4" />
+      <path d="M13 8c.7-1.4 2.1-2 3.7-2H20" />
+      <path d="M13 16c.7 1.4 2.1 2 3.7 2H20" />
+      <path d="M18 4l3 2-3 2" />
+      <path d="M18 16l3 2-3 2" />
+    </svg>
+  ),
+  rangliste: (
+    <svg {...ICON_PROPS}>
+      <path d="M8 4h8v5a4 4 0 0 1-8 0V4z" />
+      <path d="M8 5H5a3 3 0 0 0 3 4" />
+      <path d="M16 5h3a3 3 0 0 1-3 4" />
+      <path d="M12 13v3" />
+      <path d="M9 20h6" />
+      <path d="M10 16h4l.6 3H9.4l.6-3z" />
+    </svg>
+  ),
+};
+const TAB_LABELS: Record<Tab, string> = { start: "Start", spieler: "Spieler", runde: "Runde", rangliste: "Rangliste" };
+
 interface Proposal {
   matches: { team1: [string, string]; team2: [string, string] }[];
 }
@@ -218,13 +265,38 @@ function rankedPlayers(players: PadelPlayerRow[], matches: PadelMatchRow[]) {
 
 const PLAYER_PALETTE = ["#14B8A6", "#F97316", "#2563EB", "#7C3AED", "#0F766E", "#C2570C", "#1D4ED8", "#A78BFA"];
 
-function chipStyle(color: TeamColor): React.CSSProperties {
-  if (color === "club") return {};
-  return {
-    ["--chip-bg" as string]: `var(--${color}-dim, var(--club-glow-2))`,
-    ["--chip-color" as string]: `var(--${color}, var(--club))`,
-    ["--chip-border" as string]: `var(--${color}-border, var(--border-club))`,
-  };
+function teamColorVar(color: TeamColor): string {
+  return color === "club" ? "var(--club)" : `var(--${color})`;
+}
+
+function TeamBadge({
+  ids,
+  color,
+  playerName,
+}: {
+  ids: [string, string];
+  color: TeamColor;
+  playerName: (id: string) => string;
+}) {
+  const cv = teamColorVar(color);
+  return (
+    <div className="padel-team-badge">
+      <div className="padel-avatar-stack">
+        {ids.map((id) => (
+          <span
+            key={id}
+            className="padel-mini-avatar"
+            style={{ background: `linear-gradient(135deg, ${cv} 0%, color-mix(in srgb, ${cv} 65%, black) 100%)` }}
+          >
+            {playerName(id).slice(0, 2).toUpperCase()}
+          </span>
+        ))}
+      </div>
+      <div className="padel-team-names" style={{ color: cv }}>
+        {ids.map((id) => playerName(id)).join(" & ")}
+      </div>
+    </div>
+  );
 }
 
 interface PendingRound {
@@ -347,6 +419,20 @@ export function PadelApp({ initial }: { initial: PadelState }) {
           </TabButton>
         </div>
       </div>
+
+      <nav className="padel-bottom-bar">
+        {(Object.keys(TAB_LABELS) as Tab[]).map((value) => (
+          <button
+            key={value}
+            type="button"
+            className={`padel-bb-item ${tab === value ? "active" : ""}`}
+            onClick={() => setTab(value)}
+          >
+            {TAB_ICONS[value]}
+            <span>{TAB_LABELS[value]}</span>
+          </button>
+        ))}
+      </nav>
 
       {tab === "start" && (
         <StartView
@@ -478,7 +564,7 @@ function StartView({
       ) : (
         <div className="hero-banner has-image" style={{ ["--hero-img" as string]: "url(/padel/barcelona.webp)" }}>
           <div>
-            <div className="hero-greeting" style={{ textTransform: "none" }}>🇪🇸 Padel BCN</div>
+            <div className="hero-greeting" style={{ textTransform: "none" }}>🇪🇸 Padel Urlaub</div>
             <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.82)", maxWidth: 440, lineHeight: 1.6, marginTop: 8 }}>
               8 Spieler · 4 Teams pro Runde · ein Champion am Ende. Neue Runde auslosen, Ergebnis eintragen, fertig.
             </div>
@@ -655,7 +741,6 @@ function RundeView({
       <div className="padel-court-banner" style={{ ["--hero-img" as string]: "url(/padel/court.webp)" }}>
         <div className="padel-court-banner-text">
           <h1>Runde {roundNumber}</h1>
-          <p>Teams sind ausgelost — möglichst neue Partner, faire Gegner.</p>
         </div>
       </div>
 
@@ -691,22 +776,12 @@ function RundeView({
                 <div className="padel-match-label">🎾 Match {mi + 1}</div>
                 <div className="padel-match-teams">
                   <div className={`padel-match-team ${liveWinner === 2 ? "loser" : ""}`}>
-                    {team1.map((id) => (
-                      <span className="padel-chip" style={chipStyle(TEAM_COLORS[mi * 2])} key={id}>
-                        <span className="dot" />
-                        {playerName(id)}
-                      </span>
-                    ))}
+                    <TeamBadge ids={team1} color={TEAM_COLORS[mi * 2]} playerName={playerName} />
                     {liveWinner === 1 && <span className="padel-winner-badge">🏆</span>}
                   </div>
                   <div className="padel-vs">VS</div>
                   <div className={`padel-match-team ${liveWinner === 1 ? "loser" : ""}`}>
-                    {team2.map((id) => (
-                      <span className="padel-chip" style={chipStyle(TEAM_COLORS[mi * 2 + 1])} key={id}>
-                        <span className="dot" />
-                        {playerName(id)}
-                      </span>
-                    ))}
+                    <TeamBadge ids={team2} color={TEAM_COLORS[mi * 2 + 1]} playerName={playerName} />
                     {liveWinner === 2 && <span className="padel-winner-badge">🏆</span>}
                   </div>
                 </div>
@@ -872,17 +947,22 @@ function RanglisteView({
         </div>
       ) : (
         <>
-          <div className="hero-banner" style={{ padding: "var(--space-5)", marginBottom: "var(--space-5)", minHeight: "auto" }}>
-            <div>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700, letterSpacing: ".10em", textTransform: "uppercase", color: finished ? "var(--gold)" : "var(--club)", marginBottom: 6 }}>
-                {finished ? "🏆 Champion" : "🔥 Aktuell in Führung"}
-              </div>
-              <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-.01em" }}>{leader.name}</div>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, color: "var(--text-secondary)", marginTop: 4 }}>
-                {leader.wins} Siege · {leader.quote.toFixed(0)} % Quote
-              </div>
-            </div>
+          <div
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 10.5,
+              fontWeight: 700,
+              letterSpacing: ".10em",
+              textTransform: "uppercase",
+              textAlign: "center",
+              color: finished ? "var(--gold)" : "var(--club)",
+              marginBottom: "var(--space-4)",
+            }}
+          >
+            {finished ? "🏆 Champion" : "🔥 Aktuell in Führung"}
           </div>
+
+          <Podium ranked={ranked} />
 
           <div className="card">
             {ranked.map((p, i) => {
@@ -929,6 +1009,34 @@ function RanglisteView({
   );
 }
 
+function Podium({ ranked }: { ranked: ReturnType<typeof rankedPlayers> }) {
+  const [p1, p2, p3] = ranked;
+  if (!p1) return null;
+  return (
+    <div className="padel-podium">
+      <PodiumSlot place={2} player={p2} />
+      <PodiumSlot place={1} player={p1} />
+      <PodiumSlot place={3} player={p3} />
+    </div>
+  );
+}
+
+function PodiumSlot({ place, player }: { place: 1 | 2 | 3; player: ReturnType<typeof rankedPlayers>[number] | undefined }) {
+  if (!player) return <div className="padel-podium-slot empty" />;
+  const medal = place === 1 ? "🥇" : place === 2 ? "🥈" : "🥉";
+  const cv = place === 1 ? "var(--gold)" : place === 2 ? "var(--silver)" : "var(--bronze)";
+  return (
+    <div className={`padel-podium-slot p${place}`}>
+      <div className="padel-podium-avatar" style={{ background: `linear-gradient(135deg, ${cv} 0%, color-mix(in srgb, ${cv} 60%, black) 100%)` }}>
+        {player.name.slice(0, 2).toUpperCase()}
+      </div>
+      <div className="padel-podium-medal">{medal}</div>
+      <div className="padel-podium-name">{player.name}</div>
+      <div className="padel-podium-stat">{player.wins} Siege</div>
+      <div className="padel-podium-bar" />
+    </div>
+  );
+}
 
 function HistoryMatchRow({
   match,
@@ -977,22 +1085,12 @@ function HistoryMatchRow({
     <div style={{ paddingBottom: "var(--space-4)", marginBottom: "var(--space-4)", borderBottom: "1px dashed var(--border-subtle)" }}>
       <div className="padel-match-teams">
         <div className={`padel-match-team ${!editing && winner === 2 ? "loser" : ""}`}>
-          {team1.map((id) => (
-            <span className="padel-chip" style={chipStyle(colorA)} key={id}>
-              <span className="dot" />
-              {playerName(id)}
-            </span>
-          ))}
+          <TeamBadge ids={team1} color={colorA} playerName={playerName} />
           {!editing && winner === 1 && <span className="padel-winner-badge">🏆</span>}
         </div>
         <div className="padel-vs">VS</div>
         <div className={`padel-match-team ${!editing && winner === 1 ? "loser" : ""}`}>
-          {team2.map((id) => (
-            <span className="padel-chip" style={chipStyle(colorB)} key={id}>
-              <span className="dot" />
-              {playerName(id)}
-            </span>
-          ))}
+          <TeamBadge ids={team2} color={colorB} playerName={playerName} />
           {!editing && winner === 2 && <span className="padel-winner-badge">🏆</span>}
         </div>
       </div>

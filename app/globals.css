@@ -867,6 +867,34 @@ main { min-width: 0; }
 .padel-tabbar .pill-tabs { width: 100%; max-width: var(--content-max); margin: 0 auto; display: flex; }
 .padel-tabbar .pill-tab { flex: 1; justify-content: center; }
 
+.padel-bottom-bar {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 55;
+  height: var(--footer-bar-height);
+  background: var(--header-bg);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border-top: 1px solid var(--border-subtle);
+  padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0));
+  align-items: center; justify-content: space-around; gap: 2px;
+}
+@media (max-width: 800px) {
+  .padel-tabbar { display: none; }
+  .padel-bottom-bar { display: flex; }
+}
+.padel-bb-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 4px; border-radius: 10px;
+  font-family: var(--font-sans); font-size: 9.5px; font-weight: 600;
+  color: var(--text-tertiary); background: transparent; border: none; cursor: pointer;
+  transition: all var(--duration-fast) var(--ease);
+  position: relative; min-height: 44px;
+}
+.padel-bb-item svg { width: 19px; height: 19px; transition: transform var(--duration-fast) var(--ease); }
+.padel-bb-item:hover { color: var(--text-primary); }
+.padel-bb-item.active { color: var(--club); }
+.padel-bb-item.active svg { transform: translateY(-2px); }
+
 .padel-court-banner {
   position: relative; overflow: hidden;
   border-radius: var(--radius-2xl);
@@ -898,8 +926,11 @@ main { min-width: 0; }
 .padel-set-pair .win { color: var(--text-primary); }
 .padel-set-pair .lose { color: var(--text-tertiary); font-weight: 500; }
 .padel-vs { font-family: var(--font-mono); font-size: 10px; font-weight: 800; color: var(--text-tertiary); letter-spacing: .05em; background: var(--bg-surface-2); border: 1px solid var(--border-subtle); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; }
-.padel-chip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: var(--radius-full); font-size: 12px; font-weight: 700; background: var(--chip-bg, var(--club-glow-2)); color: var(--chip-color, var(--club)); border: 1px solid var(--chip-border, var(--border-club)); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-.padel-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.padel-team-badge { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.padel-avatar-stack { display: flex; }
+.padel-mini-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 800; font-size: 12px; color: #fff; border: 2px solid var(--bg-surface); box-shadow: var(--shadow-xs); flex-shrink: 0; }
+.padel-mini-avatar:not(:first-child) { margin-left: -12px; }
+.padel-team-names { font-size: 13.5px; font-weight: 800; letter-spacing: -0.01em; text-align: center; line-height: 1.3; max-width: 120px; }
 .padel-sets-grid { display: flex; flex-direction: column; gap: 6px; margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px dashed var(--border-subtle); }
 .padel-sets-labels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 2px; }
 .padel-sets-labels span { font-family: var(--font-mono); font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-tertiary); text-align: center; }
@@ -918,6 +949,21 @@ main { min-width: 0; }
 .padel-stat { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary); flex-shrink: 0; text-align: right; }
 .padel-stat strong { color: var(--text-primary); font-weight: 700; }
 
+.padel-podium { display: flex; align-items: flex-end; justify-content: center; gap: 10px; margin-bottom: var(--space-6); }
+.padel-podium-slot { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; max-width: 140px; }
+.padel-podium-slot.empty { visibility: hidden; }
+.padel-podium-avatar { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 800; font-size: 16px; color: #fff; box-shadow: var(--shadow-sm); }
+.padel-podium-slot.p1 .padel-podium-avatar { width: 66px; height: 66px; font-size: 19px; box-shadow: 0 0 0 3px var(--gold), var(--shadow-md); }
+.padel-podium-slot.p2 .padel-podium-avatar { box-shadow: 0 0 0 3px var(--silver), var(--shadow-sm); }
+.padel-podium-slot.p3 .padel-podium-avatar { box-shadow: 0 0 0 3px var(--bronze), var(--shadow-sm); }
+.padel-podium-medal { font-size: 20px; line-height: 1; margin-top: -6px; }
+.padel-podium-name { font-size: 13px; font-weight: 800; text-align: center; letter-spacing: -0.01em; }
+.padel-podium-stat { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary); }
+.padel-podium-bar { width: 100%; border-radius: var(--radius-md) var(--radius-md) 0 0; margin-top: 4px; }
+.padel-podium-slot.p1 .padel-podium-bar { height: 74px; background: linear-gradient(180deg, var(--gold) 0%, color-mix(in srgb, var(--gold) 45%, transparent) 100%); }
+.padel-podium-slot.p2 .padel-podium-bar { height: 52px; background: linear-gradient(180deg, var(--silver) 0%, color-mix(in srgb, var(--silver) 45%, transparent) 100%); }
+.padel-podium-slot.p3 .padel-podium-bar { height: 36px; background: linear-gradient(180deg, var(--bronze) 0%, color-mix(in srgb, var(--bronze) 45%, transparent) 100%); }
+
 .padel-rank-row { display: grid; grid-template-columns: 28px auto 1fr auto; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-2); border-bottom: 1px dashed var(--border-subtle); }
 .padel-rank-row:last-child { border-bottom: none; }
 .padel-rank-num { font-family: var(--font-mono); font-size: 12px; font-weight: 800; color: var(--text-tertiary); text-align: center; }
@@ -931,5 +977,6 @@ main { min-width: 0; }
 
 @media (max-width: 520px) {
   .padel-match-teams { grid-template-columns: 1fr auto 1fr; }
-  .padel-chip { font-size: 11px; padding: 6px 9px; }
+  .padel-mini-avatar { width: 30px; height: 30px; font-size: 10.5px; }
+  .padel-team-names { font-size: 12px; }
 }
