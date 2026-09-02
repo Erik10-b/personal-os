@@ -174,3 +174,35 @@ export interface WorkoutTemplateExerciseRow {
   order_index: number;
   created_at: string;
 }
+
+export interface PadelPlayerRow {
+  id: string;
+  slot: number;
+  name: string;
+  created_at: string;
+}
+
+export interface PadelTournamentRow {
+  id: true;
+  finished: boolean;
+  updated_at: string;
+}
+
+export interface PadelRoundRow {
+  id: string;
+  round_number: number;
+  created_at: string;
+}
+
+export interface PadelMatchRow {
+  id: string;
+  round_id: string;
+  match_number: 1 | 2;
+  team1_player1: string;
+  team1_player2: string;
+  team2_player1: string;
+  team2_player2: string;
+  score1: number;
+  score2: number;
+  created_at: string;
+}
