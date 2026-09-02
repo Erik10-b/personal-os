@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { PadelSet } from "@/lib/types";
 
 const DEFAULT_NAMES = ["Erik", "Tim", "Dennish", "Luis", "Giason", "Jones", "Bent", "Jannik"];
 
@@ -9,8 +10,6 @@ export interface RoundInput {
   matches: {
     team1: [string, string];
     team2: [string, string];
-    score1: number;
-    score2: number;
   }[];
 }
 
@@ -33,8 +32,15 @@ export async function resetPadelNames() {
   revalidatePath("/padel");
 }
 
-export async function savePadelRound(input: RoundInput) {
+export async function createPadelRound(input: RoundInput) {
   const supabase = await createClient();
+
+  const { data: allMatches, error: matchesCheckError } = await supabase
+    .from("padel_matches")
+    .select("id, sets");
+  if (matchesCheckError) throw matchesCheckError;
+  const hasPending = (allMatches ?? []).some((m) => !m.sets || m.sets.length === 0);
+  if (hasPending) throw new Error("Es gibt bereits eine offene Runde ohne Ergebnis.");
 
   const { data: existing, error: countError } = await supabase
     .from("padel_rounds")
@@ -59,13 +65,19 @@ export async function savePadelRound(input: RoundInput) {
     team1_player2: m.team1[1],
     team2_player1: m.team2[0],
     team2_player2: m.team2[1],
-    score1: m.score1,
-    score2: m.score2,
+    sets: [] as PadelSet[],
   }));
 
-  const { error: matchesError } = await supabase.from("padel_matches").insert(rows);
-  if (matchesError) throw matchesError;
+  const { error: insertMatchesError } = await supabase.from("padel_matches").insert(rows);
+  if (insertMatchesError) throw insertMatchesError;
 
+  revalidatePath("/padel");
+}
+
+export async function submitPadelMatchSets(matchId: string, sets: PadelSet[]) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("padel_matches").update({ sets }).eq("id", matchId);
+  if (error) throw error;
   revalidatePath("/padel");
 }
 

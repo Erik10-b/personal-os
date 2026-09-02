@@ -194,6 +194,11 @@ export interface PadelRoundRow {
   created_at: string;
 }
 
+export interface PadelSet {
+  a: number;
+  b: number;
+}
+
 export interface PadelMatchRow {
   id: string;
   round_id: string;
@@ -202,7 +207,6 @@ export interface PadelMatchRow {
   team1_player2: string;
   team2_player1: string;
   team2_player2: string;
-  score1: number;
-  score2: number;
+  sets: PadelSet[];
   created_at: string;
 }

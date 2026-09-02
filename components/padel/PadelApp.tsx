@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { PadelMatchRow, PadelPlayerRow, PadelRoundRow, PadelTournamentRow } from "@/lib/types";
+import { PadelMatchRow, PadelPlayerRow, PadelRoundRow, PadelSet, PadelTournamentRow } from "@/lib/types";
 import {
+  createPadelRound,
   renamePadelPlayer,
   resetPadelNames,
   resetPadelTournament,
-  savePadelRound,
   setPadelFinished,
+  submitPadelMatchSets,
 } from "@/lib/actions/padel";
 import type { PadelState } from "@/lib/services/padel";
 
@@ -18,6 +19,18 @@ const TEAM_COLORS: TeamColor[] = ["club", "orange", "blue", "purple"];
 
 interface Proposal {
   matches: { team1: [string, string]; team2: [string, string] }[];
+}
+
+interface SetDraft {
+  a: string;
+  b: string;
+}
+
+function blankMatchDraft(): SetDraft[] {
+  return [{ a: "", b: "" }, { a: "", b: "" }, { a: "", b: "" }];
+}
+function blankRoundDraft(): Record<number, SetDraft[]> {
+  return { 0: blankMatchDraft(), 1: blankMatchDraft() };
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -30,6 +43,35 @@ function shuffle<T>(arr: T[]): T[] {
 }
 function pairKey(a: string, b: string) {
   return a < b ? `${a}|${b}` : `${b}|${a}`;
+}
+
+function setsWinner(sets: PadelSet[]): 1 | 2 {
+  const won1 = sets.filter((s) => s.a > s.b).length;
+  const won2 = sets.filter((s) => s.b > s.a).length;
+  return won1 > won2 ? 1 : 2;
+}
+function setsDiff(sets: PadelSet[]): number {
+  return sets.reduce((acc, s) => acc + (s.a - s.b), 0);
+}
+
+function validateMatchSets(draft: SetDraft[]): { sets: PadelSet[] } | { error: string } {
+  const filled: PadelSet[] = [];
+  for (let i = 0; i < draft.length; i++) {
+    const { a, b } = draft[i];
+    const aEmpty = a === "";
+    const bEmpty = b === "";
+    if (aEmpty && bEmpty) break;
+    if (aEmpty || bEmpty) return { error: `Satz ${i + 1}: bitte beide Werte eintragen.` };
+    const na = Number(a);
+    const nb = Number(b);
+    if (na === nb) return { error: `Satz ${i + 1}: kein Unentschieden möglich.` };
+    filled.push({ a: na, b: nb });
+  }
+  if (filled.length < 2) return { error: "Bitte mindestens 2 Sätze eintragen." };
+  const won1 = filled.filter((s) => s.a > s.b).length;
+  const won2 = filled.filter((s) => s.b > s.a).length;
+  if (won1 === won2) return { error: "Unentschieden nicht möglich — bitte Satz 3 eintragen." };
+  return { sets: filled };
 }
 
 function buildHistory(matches: PadelMatchRow[]) {
@@ -54,8 +96,8 @@ function winCounts(players: PadelPlayerRow[], matches: PadelMatchRow[]) {
   const w: Record<string, number> = {};
   players.forEach((p) => (w[p.id] = 0));
   matches.forEach((m) => {
-    const t1win = m.score1 > m.score2;
-    const winners = t1win ? [m.team1_player1, m.team1_player2] : [m.team2_player1, m.team2_player2];
+    const winners =
+      setsWinner(m.sets) === 1 ? [m.team1_player1, m.team1_player2] : [m.team2_player1, m.team2_player2];
     winners.forEach((id) => {
       if (w[id] != null) w[id]++;
     });
@@ -120,21 +162,22 @@ function computeStats(players: PadelPlayerRow[], matches: PadelMatchRow[]) {
   const stats: Record<string, { games: number; wins: number; losses: number; diff: number }> = {};
   players.forEach((p) => (stats[p.id] = { games: 0, wins: 0, losses: 0, diff: 0 }));
   matches.forEach((m) => {
-    const t1win = m.score1 > m.score2;
+    const winnerIsTeam1 = setsWinner(m.sets) === 1;
     const team1 = [m.team1_player1, m.team1_player2];
     const team2 = [m.team2_player1, m.team2_player2];
-    const winners = t1win ? team1 : team2;
-    const losers = t1win ? team2 : team1;
+    const diff = setsDiff(m.sets);
+    const winners = winnerIsTeam1 ? team1 : team2;
+    const losers = winnerIsTeam1 ? team2 : team1;
     team1.forEach((id) => {
       if (stats[id]) {
         stats[id].games++;
-        stats[id].diff += m.score1 - m.score2;
+        stats[id].diff += diff;
       }
     });
     team2.forEach((id) => {
       if (stats[id]) {
         stats[id].games++;
-        stats[id].diff += m.score2 - m.score1;
+        stats[id].diff -= diff;
       }
     });
     winners.forEach((id) => stats[id] && stats[id].wins++);
@@ -169,19 +212,19 @@ function chipStyle(color: TeamColor): React.CSSProperties {
   };
 }
 
+interface PendingRound {
+  round: PadelRoundRow;
+  matches: PadelMatchRow[];
+}
+
 export function PadelApp({ initial }: { initial: PadelState }) {
   const [players, setPlayers] = useState(initial.players);
   const [rounds, setRounds] = useState(initial.rounds);
   const [matches, setMatches] = useState(initial.matches);
   const [tournament, setTournament] = useState(initial.tournament);
   const [tab, setTab] = useState<Tab>("start");
-  const [proposal, setProposal] = useState<Proposal | null>(null);
-  const [scoreDraft, setScoreDraft] = useState<Record<number, { a: string; b: string }>>({
-    0: { a: "", b: "" },
-    1: { a: "", b: "" },
-  });
-  const [errors, setErrors] = useState<Record<number, boolean>>({});
-  const [saving, setSaving] = useState(false);
+  const [drawing, setDrawing] = useState(false);
+  const [drawError, setDrawError] = useState<string | null>(null);
 
   const supabase = useMemo(() => createClient(), []);
   const refetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -217,51 +260,48 @@ export function PadelApp({ initial }: { initial: PadelState }) {
     };
   }, [supabase, refetch]);
 
-  function ensureProposal() {
-    if (!proposal) {
-      setProposal(generateProposal(players, matches));
-      setScoreDraft({ 0: { a: "", b: "" }, 1: { a: "", b: "" } });
-      setErrors({});
-    }
-  }
+  const sortedRounds = useMemo(() => [...rounds].sort((a, b) => a.round_number - b.round_number), [rounds]);
 
-  function reroll() {
-    setProposal(generateProposal(players, matches));
-    setScoreDraft({ 0: { a: "", b: "" }, 1: { a: "", b: "" } });
-    setErrors({});
-  }
-
-  async function handleSaveRound() {
-    if (!proposal) return;
-    const nextErrors: Record<number, boolean> = {};
-    let ok = true;
-    proposal.matches.forEach((_, mi) => {
-      const a = scoreDraft[mi]?.a ?? "";
-      const b = scoreDraft[mi]?.b ?? "";
-      const na = a === "" ? NaN : Number(a);
-      const nb = b === "" ? NaN : Number(b);
-      const bad = Number.isNaN(na) || Number.isNaN(nb) || na === nb;
-      nextErrors[mi] = bad;
-      if (bad) ok = false;
+  const matchesByRound = useMemo(() => {
+    const map = new Map<string, PadelMatchRow[]>();
+    matches.forEach((m) => {
+      if (!map.has(m.round_id)) map.set(m.round_id, []);
+      map.get(m.round_id)!.push(m);
     });
-    setErrors(nextErrors);
-    if (!ok) return;
+    map.forEach((list) => list.sort((a, b) => a.match_number - b.match_number));
+    return map;
+  }, [matches]);
 
-    setSaving(true);
+  const pendingRound: PendingRound | null = useMemo(() => {
+    const found = sortedRounds.find((r) => {
+      const ms = matchesByRound.get(r.id) ?? [];
+      return ms.some((m) => !m.sets || m.sets.length === 0);
+    });
+    return found ? { round: found, matches: matchesByRound.get(found.id) ?? [] } : null;
+  }, [sortedRounds, matchesByRound]);
+
+  const completedMatches = useMemo(() => matches.filter((m) => m.sets && m.sets.length > 0), [matches]);
+
+  const completedRoundsCount = useMemo(() => {
+    let count = 0;
+    for (const r of sortedRounds) {
+      const ms = matchesByRound.get(r.id) ?? [];
+      if (ms.length > 0 && ms.every((m) => m.sets && m.sets.length > 0)) count++;
+    }
+    return count;
+  }, [sortedRounds, matchesByRound]);
+
+  async function handleDraw() {
+    setDrawError(null);
+    setDrawing(true);
     try {
-      await savePadelRound({
-        matches: proposal.matches.map((m, mi) => ({
-          team1: m.team1,
-          team2: m.team2,
-          score1: Number(scoreDraft[mi].a),
-          score2: Number(scoreDraft[mi].b),
-        })),
-      });
-      setProposal(null);
+      const proposal = generateProposal(players, completedMatches);
+      await createPadelRound({ matches: proposal.matches });
       await refetch();
-      setTab("rangliste");
+    } catch (e) {
+      setDrawError(e instanceof Error ? e.message : "Fehler beim Auslosen.");
     } finally {
-      setSaving(false);
+      setDrawing(false);
     }
   }
 
@@ -269,9 +309,9 @@ export function PadelApp({ initial }: { initial: PadelState }) {
     return players.find((p) => p.id === id)?.name ?? "?";
   }
 
-  const ranked = useMemo(() => rankedPlayers(players, matches), [players, matches]);
-  const roundsPlayed = rounds.length;
-  const matchesPlayed = matches.length;
+  const ranked = useMemo(() => rankedPlayers(players, completedMatches), [players, completedMatches]);
+  const roundsPlayed = completedRoundsCount;
+  const matchesPlayed = completedMatches.length;
   const leader = ranked[0];
 
   return (
@@ -284,14 +324,7 @@ export function PadelApp({ initial }: { initial: PadelState }) {
           <TabButton tab={tab} value="spieler" onClick={setTab}>
             Spieler
           </TabButton>
-          <TabButton
-            tab={tab}
-            value="runde"
-            onClick={(t) => {
-              setTab(t);
-              ensureProposal();
-            }}
-          >
+          <TabButton tab={tab} value="runde" onClick={setTab}>
             Runde
           </TabButton>
           <TabButton tab={tab} value="rangliste" onClick={setTab}>
@@ -306,17 +339,14 @@ export function PadelApp({ initial }: { initial: PadelState }) {
           matchesPlayed={matchesPlayed}
           leader={leader}
           finished={tournament.finished}
-          onNavigate={(t) => {
-            setTab(t);
-            if (t === "runde") ensureProposal();
-          }}
+          onNavigate={setTab}
         />
       )}
 
       {tab === "spieler" && (
         <SpielerView
           players={players}
-          matches={matches}
+          matches={completedMatches}
           onReset={async () => {
             if (window.confirm("Alle Spielernamen auf die Standardnamen zurücksetzen?")) {
               await resetPadelNames();
@@ -335,18 +365,18 @@ export function PadelApp({ initial }: { initial: PadelState }) {
 
       {tab === "runde" && (
         <RundeView
-          roundNumber={roundsPlayed + 1}
+          key={pendingRound?.round.id ?? "none"}
+          roundNumber={pendingRound ? pendingRound.round.round_number : completedRoundsCount + 1}
           finished={tournament.finished}
-          proposal={proposal}
-          scoreDraft={scoreDraft}
-          errors={errors}
-          saving={saving}
+          pendingRound={pendingRound}
+          drawing={drawing}
+          drawError={drawError}
           playerName={playerName}
-          onReroll={reroll}
-          onScoreChange={(mi, side, value) =>
-            setScoreDraft((prev) => ({ ...prev, [mi]: { ...prev[mi], [side]: value } }))
-          }
-          onSave={handleSaveRound}
+          onDraw={handleDraw}
+          onSubmitted={async () => {
+            await refetch();
+            setTab("rangliste");
+          }}
         />
       )}
 
@@ -419,10 +449,10 @@ function StartView({
           </div>
         </div>
       ) : (
-        <div className="hero-banner">
+        <div className="hero-banner has-image" style={{ ["--hero-img" as string]: "url(/padel/barcelona.webp)" }}>
           <div>
             <div className="hero-greeting" style={{ textTransform: "none" }}>🇪🇸 Padel BCN</div>
-            <div style={{ fontSize: 12.5, color: "var(--text-secondary)", maxWidth: 440, lineHeight: 1.6, marginTop: 8 }}>
+            <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.82)", maxWidth: 440, lineHeight: 1.6, marginTop: 8 }}>
               8 Spieler · 4 Teams pro Runde · ein Champion am Ende. Neue Runde auslosen, Ergebnis eintragen, fertig.
             </div>
           </div>
@@ -534,30 +564,61 @@ function SpielerView({
 function RundeView({
   roundNumber,
   finished,
-  proposal,
-  scoreDraft,
-  errors,
-  saving,
+  pendingRound,
+  drawing,
+  drawError,
   playerName,
-  onReroll,
-  onScoreChange,
-  onSave,
+  onDraw,
+  onSubmitted,
 }: {
   roundNumber: number;
   finished: boolean;
-  proposal: Proposal | null;
-  scoreDraft: Record<number, { a: string; b: string }>;
-  errors: Record<number, boolean>;
-  saving: boolean;
+  pendingRound: PendingRound | null;
+  drawing: boolean;
+  drawError: string | null;
   playerName: (id: string) => string;
-  onReroll: () => void;
-  onScoreChange: (mi: number, side: "a" | "b", value: string) => void;
-  onSave: () => void;
+  onDraw: () => void;
+  onSubmitted: () => void | Promise<void>;
 }) {
+  const [setsDraft, setSetsDraft] = useState<Record<number, SetDraft[]>>(blankRoundDraft());
+  const [errors, setErrors] = useState<Record<number, string>>({});
+  const [saving, setSaving] = useState(false);
+
+  function onSetChange(mi: number, si: number, side: "a" | "b", value: string) {
+    setSetsDraft((prev) => {
+      const next = { ...prev, [mi]: prev[mi].map((s) => ({ ...s })) };
+      next[mi][si][side] = value;
+      return next;
+    });
+  }
+
+  async function handleSubmit() {
+    if (!pendingRound) return;
+    const nextErrors: Record<number, string> = {};
+    const results: (PadelSet[] | null)[] = pendingRound.matches.map((_, mi) => {
+      const res = validateMatchSets(setsDraft[mi] ?? blankMatchDraft());
+      if ("error" in res) {
+        nextErrors[mi] = res.error;
+        return null;
+      }
+      return res.sets;
+    });
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+
+    setSaving(true);
+    try {
+      await Promise.all(pendingRound.matches.map((m, mi) => submitPadelMatchSets(m.id, results[mi]!)));
+      await onSubmitted();
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <>
-      <div className="page-head">
-        <div>
+      <div className="padel-court-banner" style={{ ["--hero-img" as string]: "url(/padel/court.webp)" }}>
+        <div className="padel-court-banner-text">
           <h1>Runde {roundNumber}</h1>
           <p>Teams sind ausgelost — möglichst neue Partner, faire Gegner.</p>
         </div>
@@ -570,69 +631,89 @@ function RundeView({
           <br />
           Im Tab „Spieler&rdquo; kannst du ein neues starten.
         </div>
-      ) : !proposal ? (
-        <div className="empty-state">Lose wird gezogen …</div>
-      ) : (
-        <>
-          {proposal.matches.map((m, mi) => (
-            <div className="padel-match-card" key={mi}>
-              <div className="padel-match-label">🎾 Match {mi + 1}</div>
-              <div className="padel-match-teams">
-                <div className="padel-match-team">
-                  {m.team1.map((id) => (
-                    <span className="padel-chip" style={chipStyle(TEAM_COLORS[mi * 2])} key={id}>
-                      <span className="dot" />
-                      {playerName(id)}
-                    </span>
-                  ))}
-                </div>
-                <div className="padel-vs">VS</div>
-                <div className="padel-match-team">
-                  {m.team2.map((id) => (
-                    <span className="padel-chip" style={chipStyle(TEAM_COLORS[mi * 2 + 1])} key={id}>
-                      <span className="dot" />
-                      {playerName(id)}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="padel-score-row">
-                <input
-                  className="padel-score-input"
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  max={99}
-                  placeholder="0"
-                  value={scoreDraft[mi]?.a ?? ""}
-                  onChange={(e) => onScoreChange(mi, "a", e.target.value)}
-                />
-                <span className="padel-score-sep">:</span>
-                <input
-                  className="padel-score-input"
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  max={99}
-                  placeholder="0"
-                  value={scoreDraft[mi]?.b ?? ""}
-                  onChange={(e) => onScoreChange(mi, "b", e.target.value)}
-                />
-              </div>
-              {errors[mi] && (
-                <div className="padel-match-err">Bitte beide Ergebnisse eintragen — Unentschieden ist nicht möglich.</div>
-              )}
-            </div>
-          ))}
-
-          <div style={{ display: "flex", gap: "var(--space-3)", marginTop: "var(--space-2)" }}>
-            <button className="btn secondary" onClick={onReroll} type="button" disabled={saving}>
-              🎲 Neu auslosen
-            </button>
-            <button className="btn primary block" onClick={onSave} type="button" disabled={saving}>
-              {saving ? "Speichert …" : "Ergebnis speichern"}
+      ) : !pendingRound ? (
+        <div className="empty-state">
+          <div className="ico">🎾</div>
+          Noch keine Teams für diese Runde.
+          <br />
+          Die Auslosung findet einmalig statt — danach steht sie fest.
+          <div style={{ marginTop: "var(--space-6)" }}>
+            <button className="btn primary" onClick={onDraw} type="button" disabled={drawing}>
+              🎲 {drawing ? "Lose wird gezogen …" : "Teams auslosen"}
             </button>
           </div>
+          {drawError && <div className="padel-match-err" style={{ marginTop: "var(--space-4)" }}>{drawError}</div>}
+        </div>
+      ) : (
+        <>
+          {pendingRound.matches.map((m, mi) => {
+            const team1: [string, string] = [m.team1_player1, m.team1_player2];
+            const team2: [string, string] = [m.team2_player1, m.team2_player2];
+            const draft = setsDraft[mi] ?? blankMatchDraft();
+            return (
+              <div className="padel-match-card" key={m.id}>
+                <div className="padel-match-label">🎾 Match {mi + 1}</div>
+                <div className="padel-match-teams">
+                  <div className="padel-match-team">
+                    {team1.map((id) => (
+                      <span className="padel-chip" style={chipStyle(TEAM_COLORS[mi * 2])} key={id}>
+                        <span className="dot" />
+                        {playerName(id)}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="padel-vs">VS</div>
+                  <div className="padel-match-team">
+                    {team2.map((id) => (
+                      <span className="padel-chip" style={chipStyle(TEAM_COLORS[mi * 2 + 1])} key={id}>
+                        <span className="dot" />
+                        {playerName(id)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="padel-sets-grid">
+                  <div className="padel-sets-labels">
+                    {[0, 1, 2].map((si) => (
+                      <span key={si}>Satz {si + 1}</span>
+                    ))}
+                  </div>
+                  {(["a", "b"] as const).map((side) => (
+                    <div className="padel-sets-row" key={side}>
+                      {[0, 1, 2].map((si) => {
+                        const a = draft[si].a;
+                        const b = draft[si].b;
+                        const bothFilled = a !== "" && b !== "";
+                        const mine = draft[si][side];
+                        const other = side === "a" ? b : a;
+                        const isWin = bothFilled && Number(mine) > Number(other);
+                        const isLose = bothFilled && Number(mine) < Number(other);
+                        return (
+                          <input
+                            key={si}
+                            className={`padel-set-input ${isWin ? "win" : ""} ${isLose ? "lose" : ""}`}
+                            type="number"
+                            inputMode="numeric"
+                            min={0}
+                            max={99}
+                            placeholder="–"
+                            value={mine}
+                            onChange={(e) => onSetChange(mi, si, side, e.target.value)}
+                          />
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+                {errors[mi] && <div className="padel-match-err">{errors[mi]}</div>}
+              </div>
+            );
+          })}
+
+          <button className="btn primary block" onClick={handleSubmit} type="button" disabled={saving}>
+            {saving ? "Speichert …" : "Ergebnis speichern"}
+          </button>
         </>
       )}
     </>
