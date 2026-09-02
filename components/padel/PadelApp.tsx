@@ -13,7 +13,7 @@ import {
 } from "@/lib/actions/padel";
 import type { PadelState } from "@/lib/services/padel";
 
-type Tab = "start" | "spieler" | "runde" | "rangliste" | "verlauf";
+type Tab = "start" | "spieler" | "runde" | "rangliste";
 type TeamColor = "club" | "orange" | "blue" | "purple";
 const TEAM_COLORS: TeamColor[] = ["club", "orange", "blue", "purple"];
 
@@ -345,9 +345,6 @@ export function PadelApp({ initial }: { initial: PadelState }) {
           <TabButton tab={tab} value="rangliste" onClick={setTab}>
             Rangliste
           </TabButton>
-          <TabButton tab={tab} value="verlauf" onClick={setTab}>
-            Verlauf
-          </TabButton>
         </div>
       </div>
 
@@ -387,6 +384,8 @@ export function PadelApp({ initial }: { initial: PadelState }) {
           roundNumber={pendingRound ? pendingRound.round.round_number : completedRoundsCount + 1}
           finished={tournament.finished}
           pendingRound={pendingRound}
+          sortedRounds={sortedRounds}
+          matchesByRound={matchesByRound}
           drawing={drawing}
           drawError={drawError}
           playerName={playerName}
@@ -394,6 +393,16 @@ export function PadelApp({ initial }: { initial: PadelState }) {
           onSubmitted={async () => {
             await refetch();
             setTab("rangliste");
+          }}
+          onSaveMatch={async (matchId, sets) => {
+            await submitPadelMatchSets(matchId, sets);
+            await refetch();
+          }}
+          onResetTournament={async () => {
+            if (window.confirm("Turnier wirklich neu starten? Alle Runden und Ergebnisse werden gelöscht.")) {
+              await resetPadelTournament();
+              await refetch();
+            }
           }}
         />
       )}
@@ -409,25 +418,6 @@ export function PadelApp({ initial }: { initial: PadelState }) {
           onUncrown={async () => {
             await setPadelFinished(false);
             await refetch();
-          }}
-        />
-      )}
-
-      {tab === "verlauf" && (
-        <VerlaufView
-          sortedRounds={sortedRounds}
-          matchesByRound={matchesByRound}
-          playerName={playerName}
-          onSaveMatch={async (matchId, sets) => {
-            await submitPadelMatchSets(matchId, sets);
-            await refetch();
-          }}
-          onResetTournament={async () => {
-            if (window.confirm("Turnier wirklich neu starten? Alle Runden und Ergebnisse werden gelöscht.")) {
-              await resetPadelTournament();
-              await refetch();
-              setTab("start");
-            }
           }}
         />
       )}
@@ -602,20 +592,28 @@ function RundeView({
   roundNumber,
   finished,
   pendingRound,
+  sortedRounds,
+  matchesByRound,
   drawing,
   drawError,
   playerName,
   onDraw,
   onSubmitted,
+  onSaveMatch,
+  onResetTournament,
 }: {
   roundNumber: number;
   finished: boolean;
   pendingRound: PendingRound | null;
+  sortedRounds: PadelRoundRow[];
+  matchesByRound: Map<string, PadelMatchRow[]>;
   drawing: boolean;
   drawError: string | null;
   playerName: (id: string) => string;
   onDraw: () => void;
   onSubmitted: () => void | Promise<void>;
+  onSaveMatch: (matchId: string, sets: PadelSet[]) => Promise<void>;
+  onResetTournament: () => void;
 }) {
   const [setsDraft, setSetsDraft] = useState<Record<number, SetDraft[]>>(blankRoundDraft());
   const [errors, setErrors] = useState<Record<number, string>>({});
@@ -756,7 +754,89 @@ function RundeView({
           </button>
         </>
       )}
+
+      <PadelRoundHistory
+        sortedRounds={sortedRounds}
+        matchesByRound={matchesByRound}
+        playerName={playerName}
+        onSaveMatch={onSaveMatch}
+        onResetTournament={onResetTournament}
+      />
     </>
+  );
+}
+
+function PadelRoundHistory({
+  sortedRounds,
+  matchesByRound,
+  playerName,
+  onSaveMatch,
+  onResetTournament,
+}: {
+  sortedRounds: PadelRoundRow[];
+  matchesByRound: Map<string, PadelMatchRow[]>;
+  playerName: (id: string) => string;
+  onSaveMatch: (matchId: string, sets: PadelSet[]) => Promise<void>;
+  onResetTournament: () => void;
+}) {
+  const completedRounds = sortedRounds
+    .filter((r) => {
+      const ms = matchesByRound.get(r.id) ?? [];
+      return ms.length > 0 && ms.every((m) => m.sets && m.sets.length > 0);
+    })
+    .slice()
+    .reverse();
+
+  if (completedRounds.length === 0) return null;
+
+  return (
+    <div style={{ marginTop: "var(--space-8)" }}>
+      <div
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: 10.5,
+          fontWeight: 700,
+          letterSpacing: ".08em",
+          textTransform: "uppercase",
+          color: "var(--text-tertiary)",
+          marginBottom: "var(--space-4)",
+        }}
+      >
+        Bisherige Runden
+      </div>
+
+      {completedRounds.map((r) => (
+        <div className="card" key={r.id} style={{ marginBottom: "var(--space-4)" }}>
+          <div
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: ".08em",
+              textTransform: "uppercase",
+              color: "var(--text-tertiary)",
+              marginBottom: "var(--space-4)",
+            }}
+          >
+            Runde {r.round_number}
+          </div>
+          {(matchesByRound.get(r.id) ?? []).map((m, mi) => (
+            <HistoryMatchRow
+              key={m.id}
+              match={m}
+              colorA={TEAM_COLORS[mi * 2]}
+              colorB={TEAM_COLORS[mi * 2 + 1]}
+              playerName={playerName}
+              onSave={(sets) => onSaveMatch(m.id, sets)}
+            />
+          ))}
+        </div>
+      ))}
+
+      <button className="btn danger sm" onClick={onResetTournament} type="button">
+        Turnier neu starten
+      </button>
+    </div>
   );
 }
 
@@ -849,77 +929,6 @@ function RanglisteView({
   );
 }
 
-function VerlaufView({
-  sortedRounds,
-  matchesByRound,
-  playerName,
-  onSaveMatch,
-  onResetTournament,
-}: {
-  sortedRounds: PadelRoundRow[];
-  matchesByRound: Map<string, PadelMatchRow[]>;
-  playerName: (id: string) => string;
-  onSaveMatch: (matchId: string, sets: PadelSet[]) => Promise<void>;
-  onResetTournament: () => void;
-}) {
-  const completedRounds = sortedRounds
-    .filter((r) => {
-      const ms = matchesByRound.get(r.id) ?? [];
-      return ms.length > 0 && ms.every((m) => m.sets && m.sets.length > 0);
-    })
-    .slice()
-    .reverse();
-
-  return (
-    <>
-      <div className="page-head">
-        <div>
-          <h1>Verlauf</h1>
-          <p>Alle gespielten Runden — Ergebnisse lassen sich nachträglich korrigieren.</p>
-        </div>
-      </div>
-
-      {completedRounds.length === 0 ? (
-        <div className="empty-state">
-          <div className="ico">🎾</div>
-          Noch keine abgeschlossene Runde.
-        </div>
-      ) : (
-        completedRounds.map((r) => (
-          <div className="card" key={r.id} style={{ marginBottom: "var(--space-4)" }}>
-            <div
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: ".08em",
-                textTransform: "uppercase",
-                color: "var(--text-tertiary)",
-                marginBottom: "var(--space-4)",
-              }}
-            >
-              Runde {r.round_number}
-            </div>
-            {(matchesByRound.get(r.id) ?? []).map((m, mi) => (
-              <HistoryMatchRow
-                key={m.id}
-                match={m}
-                colorA={TEAM_COLORS[mi * 2]}
-                colorB={TEAM_COLORS[mi * 2 + 1]}
-                playerName={playerName}
-                onSave={(sets) => onSaveMatch(m.id, sets)}
-              />
-            ))}
-          </div>
-        ))
-      )}
-
-      <button className="btn danger sm" onClick={onResetTournament} type="button" style={{ marginTop: "var(--space-2)" }}>
-        Turnier neu starten
-      </button>
-    </>
-  );
-}
 
 function HistoryMatchRow({
   match,
