@@ -13,7 +13,7 @@ import {
 } from "@/lib/actions/padel";
 import type { PadelState } from "@/lib/services/padel";
 
-type Tab = "start" | "spieler" | "runde" | "rangliste";
+type Tab = "start" | "spieler" | "runde" | "rangliste" | "verlauf";
 type TeamColor = "club" | "orange" | "blue" | "purple";
 const TEAM_COLORS: TeamColor[] = ["club", "orange", "blue", "purple"];
 
@@ -31,6 +31,13 @@ function blankMatchDraft(): SetDraft[] {
 }
 function blankRoundDraft(): Record<number, SetDraft[]> {
   return { 0: blankMatchDraft(), 1: blankMatchDraft() };
+}
+function setsToDraft(sets: PadelSet[]): SetDraft[] {
+  const draft = blankMatchDraft();
+  sets.forEach((s, i) => {
+    if (i < 3) draft[i] = { a: String(s.a), b: String(s.b) };
+  });
+  return draft;
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -72,6 +79,14 @@ function validateMatchSets(draft: SetDraft[]): { sets: PadelSet[] } | { error: s
   const won2 = filled.filter((s) => s.b > s.a).length;
   if (won1 === won2) return { error: "Unentschieden nicht möglich — bitte Satz 3 eintragen." };
   return { sets: filled };
+}
+
+function draftWinner(draft: SetDraft[]): 1 | 2 | null {
+  const filled = draft.filter((s) => s.a !== "" && s.b !== "").map((s) => ({ a: Number(s.a), b: Number(s.b) }));
+  const won1 = filled.filter((s) => s.a > s.b).length;
+  const won2 = filled.filter((s) => s.b > s.a).length;
+  if (won1 === won2) return null;
+  return won1 > won2 ? 1 : 2;
 }
 
 function buildHistory(matches: PadelMatchRow[]) {
@@ -330,6 +345,9 @@ export function PadelApp({ initial }: { initial: PadelState }) {
           <TabButton tab={tab} value="rangliste" onClick={setTab}>
             Rangliste
           </TabButton>
+          <TabButton tab={tab} value="verlauf" onClick={setTab}>
+            Verlauf
+          </TabButton>
         </div>
       </div>
 
@@ -391,6 +409,25 @@ export function PadelApp({ initial }: { initial: PadelState }) {
           onUncrown={async () => {
             await setPadelFinished(false);
             await refetch();
+          }}
+        />
+      )}
+
+      {tab === "verlauf" && (
+        <VerlaufView
+          sortedRounds={sortedRounds}
+          matchesByRound={matchesByRound}
+          playerName={playerName}
+          onSaveMatch={async (matchId, sets) => {
+            await submitPadelMatchSets(matchId, sets);
+            await refetch();
+          }}
+          onResetTournament={async () => {
+            if (window.confirm("Turnier wirklich neu starten? Alle Runden und Ergebnisse werden gelöscht.")) {
+              await resetPadelTournament();
+              await refetch();
+              setTab("start");
+            }
           }}
         />
       )}
@@ -650,26 +687,29 @@ function RundeView({
             const team1: [string, string] = [m.team1_player1, m.team1_player2];
             const team2: [string, string] = [m.team2_player1, m.team2_player2];
             const draft = setsDraft[mi] ?? blankMatchDraft();
+            const liveWinner = draftWinner(draft);
             return (
               <div className="padel-match-card" key={m.id}>
                 <div className="padel-match-label">🎾 Match {mi + 1}</div>
                 <div className="padel-match-teams">
-                  <div className="padel-match-team">
+                  <div className={`padel-match-team ${liveWinner === 2 ? "loser" : ""}`}>
                     {team1.map((id) => (
                       <span className="padel-chip" style={chipStyle(TEAM_COLORS[mi * 2])} key={id}>
                         <span className="dot" />
                         {playerName(id)}
                       </span>
                     ))}
+                    {liveWinner === 1 && <span className="padel-winner-badge">🏆</span>}
                   </div>
                   <div className="padel-vs">VS</div>
-                  <div className="padel-match-team">
+                  <div className={`padel-match-team ${liveWinner === 1 ? "loser" : ""}`}>
                     {team2.map((id) => (
                       <span className="padel-chip" style={chipStyle(TEAM_COLORS[mi * 2 + 1])} key={id}>
                         <span className="dot" />
                         {playerName(id)}
                       </span>
                     ))}
+                    {liveWinner === 2 && <span className="padel-winner-badge">🏆</span>}
                   </div>
                 </div>
 
@@ -806,5 +846,212 @@ function RanglisteView({
         </>
       )}
     </>
+  );
+}
+
+function VerlaufView({
+  sortedRounds,
+  matchesByRound,
+  playerName,
+  onSaveMatch,
+  onResetTournament,
+}: {
+  sortedRounds: PadelRoundRow[];
+  matchesByRound: Map<string, PadelMatchRow[]>;
+  playerName: (id: string) => string;
+  onSaveMatch: (matchId: string, sets: PadelSet[]) => Promise<void>;
+  onResetTournament: () => void;
+}) {
+  const completedRounds = sortedRounds
+    .filter((r) => {
+      const ms = matchesByRound.get(r.id) ?? [];
+      return ms.length > 0 && ms.every((m) => m.sets && m.sets.length > 0);
+    })
+    .slice()
+    .reverse();
+
+  return (
+    <>
+      <div className="page-head">
+        <div>
+          <h1>Verlauf</h1>
+          <p>Alle gespielten Runden — Ergebnisse lassen sich nachträglich korrigieren.</p>
+        </div>
+      </div>
+
+      {completedRounds.length === 0 ? (
+        <div className="empty-state">
+          <div className="ico">🎾</div>
+          Noch keine abgeschlossene Runde.
+        </div>
+      ) : (
+        completedRounds.map((r) => (
+          <div className="card" key={r.id} style={{ marginBottom: "var(--space-4)" }}>
+            <div
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: ".08em",
+                textTransform: "uppercase",
+                color: "var(--text-tertiary)",
+                marginBottom: "var(--space-4)",
+              }}
+            >
+              Runde {r.round_number}
+            </div>
+            {(matchesByRound.get(r.id) ?? []).map((m, mi) => (
+              <HistoryMatchRow
+                key={m.id}
+                match={m}
+                colorA={TEAM_COLORS[mi * 2]}
+                colorB={TEAM_COLORS[mi * 2 + 1]}
+                playerName={playerName}
+                onSave={(sets) => onSaveMatch(m.id, sets)}
+              />
+            ))}
+          </div>
+        ))
+      )}
+
+      <button className="btn danger sm" onClick={onResetTournament} type="button" style={{ marginTop: "var(--space-2)" }}>
+        Turnier neu starten
+      </button>
+    </>
+  );
+}
+
+function HistoryMatchRow({
+  match,
+  colorA,
+  colorB,
+  playerName,
+  onSave,
+}: {
+  match: PadelMatchRow;
+  colorA: TeamColor;
+  colorB: TeamColor;
+  playerName: (id: string) => string;
+  onSave: (sets: PadelSet[]) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<SetDraft[]>(() => setsToDraft(match.sets));
+  const [error, setError] = useState<string | undefined>();
+  const [saving, setSaving] = useState(false);
+
+  const team1: [string, string] = [match.team1_player1, match.team1_player2];
+  const team2: [string, string] = [match.team2_player1, match.team2_player2];
+  const winner = setsWinner(match.sets);
+
+  function startEdit() {
+    setDraft(setsToDraft(match.sets));
+    setError(undefined);
+    setEditing(true);
+  }
+
+  async function save() {
+    const res = validateMatchSets(draft);
+    if ("error" in res) {
+      setError(res.error);
+      return;
+    }
+    setSaving(true);
+    try {
+      await onSave(res.sets);
+      setEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div style={{ paddingBottom: "var(--space-4)", marginBottom: "var(--space-4)", borderBottom: "1px dashed var(--border-subtle)" }}>
+      <div className="padel-match-teams">
+        <div className={`padel-match-team ${!editing && winner === 2 ? "loser" : ""}`}>
+          {team1.map((id) => (
+            <span className="padel-chip" style={chipStyle(colorA)} key={id}>
+              <span className="dot" />
+              {playerName(id)}
+            </span>
+          ))}
+          {!editing && winner === 1 && <span className="padel-winner-badge">🏆</span>}
+        </div>
+        <div className="padel-vs">VS</div>
+        <div className={`padel-match-team ${!editing && winner === 1 ? "loser" : ""}`}>
+          {team2.map((id) => (
+            <span className="padel-chip" style={chipStyle(colorB)} key={id}>
+              <span className="dot" />
+              {playerName(id)}
+            </span>
+          ))}
+          {!editing && winner === 2 && <span className="padel-winner-badge">🏆</span>}
+        </div>
+      </div>
+
+      {!editing ? (
+        <div className="padel-sets-summary">
+          {match.sets.map((s, i) => (
+            <span className="padel-set-pair" key={i}>
+              <span className={s.a > s.b ? "win" : "lose"}>{s.a}</span>:
+              <span className={s.b > s.a ? "win" : "lose"}>{s.b}</span>
+            </span>
+          ))}
+          <button className="btn ghost sm" onClick={startEdit} type="button">
+            ✏️ Bearbeiten
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="padel-sets-grid">
+            <div className="padel-sets-labels">
+              {[0, 1, 2].map((si) => (
+                <span key={si}>Satz {si + 1}</span>
+              ))}
+            </div>
+            {(["a", "b"] as const).map((side) => (
+              <div className="padel-sets-row" key={side}>
+                {[0, 1, 2].map((si) => {
+                  const a = draft[si].a;
+                  const b = draft[si].b;
+                  const bothFilled = a !== "" && b !== "";
+                  const mine = draft[si][side];
+                  const other = side === "a" ? b : a;
+                  const isWin = bothFilled && Number(mine) > Number(other);
+                  const isLose = bothFilled && Number(mine) < Number(other);
+                  return (
+                    <input
+                      key={si}
+                      className={`padel-set-input ${isWin ? "win" : ""} ${isLose ? "lose" : ""}`}
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={99}
+                      placeholder="–"
+                      value={mine}
+                      onChange={(e) =>
+                        setDraft((prev) => {
+                          const next = prev.map((s) => ({ ...s }));
+                          next[si][side] = e.target.value;
+                          return next;
+                        })
+                      }
+                    />
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+          {error && <div className="padel-match-err">{error}</div>}
+          <div style={{ display: "flex", gap: "var(--space-2)", marginTop: "var(--space-3)" }}>
+            <button className="btn secondary sm" onClick={() => setEditing(false)} type="button" disabled={saving}>
+              Abbrechen
+            </button>
+            <button className="btn primary sm" onClick={save} type="button" disabled={saving}>
+              {saving ? "Speichert …" : "Speichern"}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
