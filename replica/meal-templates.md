@@ -1,30 +1,35 @@
 # Ernährung: persönliche Standardgerichte
 
-## Vorbereitet
+## Gerichte und Mengen
 
-- Quark mit Crunchy Butterkeks Müsli und Flohsamenschalen
-- Hähnchen-Reis-Curry
-- Hackfleisch-Nudeln
-- Brokkoli-Kohlrabi-Auflauf
-- Drillinge mit Ajvar-Sahne-Soße
-- Skyr-Pesto-Nudeln mit Hähnchengeschnetzeltem
+Sechs vollständige, anpassbare Rezeptvorschläge stehen bereit: Quark mit Butterkeks-Müsli, Hähnchen-Reis-Curry, Hackfleisch-Nudeln, Brokkoli-Kohlrabi-Auflauf, Drillinge mit Ajvar-Sahne-Soße und Skyr-Pesto-Nudeln mit Hähnchengeschnetzeltem. Zutatenmengen, Portionszahlen und kurze Kochanleitungen sind hinterlegt.
 
-Bekannte Mengen sind vorbelegt (z.B. 500 g Quark und 400 g Hähnchen für 3 Curryportionen). Fehlende Mengen, Portionszahlen und Produktnährwerte werden nicht geschätzt. Alle sechs Vorlagen sind deshalb zunächst unvollständig; es wurde keine gegessene Mahlzeit ohne Mengenangaben automatisch gebucht.
+Fehlende persönliche Mengen wurden als Vorschlag ergänzt. Nährwerte sind ausdrücklich Schätzwerte (Anzeige „ca.“ und Kennzeichnung im Tagebuch). Tatsächlich gegessene Mahlzeiten werden nicht automatisch gebucht. Die bekannten 500 g Quark bzw. 400 g Hähnchen für drei Curryportionen bleiben enthalten. Reis und Nudeln beziehen sich auf die Trockenmenge; Flüssigkeiten sind in ml mit Nährwerten je 100 ml geführt.
+
+Alte gespeicherte Starter werden an leeren, namentlich passenden Zutatenfeldern ergänzt. Persönliche Mengen, ausgeschlossene Zutaten (0), Portionszahlen und Kochanleitungen bleiben erhalten. Eine vollständig leere „Proteinquelle“ im alten Drillinge-Vorschlag wird als Hähnchen vorgeschlagen. Bereits gebuchte Mahlzeiten behalten ihre damaligen Werte.
+
+Cremefine ist als 7-%-Variante angenommen. Quellen für zwei Produktwerte (abgerufen 02.11.2026):
+- https://www.rama.com/de-de/produkte/rama-cremefine/rama-cremefine-zum-kochen-7
+- https://www.alpro.com/de-de/products/drinks/coconut-unsweetened-1l
+
+Alle übrigen Nährwerte sind gerundete generische Schätzwerte. Eigene Packungsangaben können unter „Vorlage bearbeiten“ hinterlegt werden.
 
 ## Nutzung
 
-Einmal „Einrichten“ öffnen. Entweder bekannte Nährwerte der gesamten Zubereitung eintragen oder Zutatenmengen und Produktwerte je 100 g hinterlegen. Bei Mealprep die Anzahl der Portionen angeben. Nicht verwendete Zutaten entfernen oder auf 0 g setzen. Unvollständige Vorlagen können gespeichert, aber noch nicht geloggt werden.
+Der runde Plus-Button öffnet die Gerichteauswahl. Gericht wählen, standardmäßig eine Portion oder ½, 1½, 2 bzw. eine eigene Menge bestätigen und eintragen. Alternativ kann die Auswahl über eine Gerichtkarte geöffnet werden. Die Vorschau berechnet Kalorien und Eiweiß unmittelbar neu. Zutatenmengen können nur für diesen Eintrag angepasst werden, ohne die Vorlage zu verändern. Nach einer Portionsänderung übernehmen die Zutatenfelder diese Portionierung.
 
-Danach ½, 1, 1½ oder 2 Portionen wählen und direkt eintragen. Unter „Mengen ändern“ können einzelne gegessene Zutatenmengen angepasst werden, ohne die Vorlage zu ändern. Zum Eintragen nach Gramm muss das gewogene Gesamtgewicht des fertigen Gerichts gespeichert sein. Roh- und Kochgewichte werden nicht gleichgesetzt.
+„Zutaten & Zubereitung“ zeigt die Mengen für die ganze Zubereitung und die Kochanleitung. Die Vorlage lässt sich dauerhaft bearbeiten, einschließlich Anleitung und Einheiten. Zum Eintragen nach Gramm muss das gewogene Gesamtgewicht des fertigen Gerichts gespeichert sein. Roh- und Kochgewichte werden nicht gleichgesetzt.
 
-Bereits gebuchte Mahlzeiten behalten ihre damaligen Nährwerte, auch wenn die Vorlage später geändert wird. „Wie am Vortag“ übernimmt einzelne Mahlzeiten unverändert. Einmalige Mahlzeiten können weiterhin manuell eingetragen werden.
+„Wie am Vortag“ übernimmt einzelne Mahlzeiten unverändert. Einmalige Mahlzeiten können weiterhin manuell eingetragen werden. Der Server berechnet die Nährwerte aus der privaten Vorlage erneut; wiederholte Anfragen nach einem Netzwerkfehler verwenden denselben Eintragsschlüssel gegen doppelte Buchungen.
 
-## Einmalige Einrichtung
+## Datenbank
 
-`supabase/migrations/0014_meal_templates.sql` im Supabase SQL Editor des vorhandenen Projekts ausführen und dann den PR mergen. Die Migration ergänzt eine private Rezepttabelle mit RLS und einen Wiederholungsschutz für Einträge. Keine vorhandenen Daten werden gelöscht oder überschrieben. Die Migration wurde hier nicht gegen die persönliche Datenbank ausgeführt.
-
-Ohne die neue Tabelle bleibt der Ernährungstab mit vorbereiteten Gerichten und Hinweis erreichbar; Speichern und Schnellbuchung sind bis zur Migration gesperrt. Die bisherige manuelle Erfassung bleibt nutzbar.
+Die bestehende Migration `supabase/migrations/0014_meal_templates.sql` wird benötigt: private Rezepttabelle mit RLS und Wiederholungsschutz. Für diese Optimierung ist keine weitere Migration erforderlich. Ohne 0014 bleiben Vorschau, Auswahl und Mengenänderung zugänglich; Speichern ist mit einem Hinweis gesperrt. Die manuelle Erfassung bleibt nutzbar. Die Migration wurde hier nicht gegen die persönliche Datenbank ausgeführt.
 
 ## Validierung
 
-`node --test tests/mealTemplates.test.mjs`: neun Tests für vorbereitete Gerichte, Portionsrechnung, gewogenes Fertiggewicht, individuelle Zutatenmengen, unvollständige Angaben, Grenzen und Datumsvalidierung. Produktionsbuild, TypeScript und gezieltes ESLint erfolgreich. Keine angemeldeten Ende-zu-Ende-Tests gegen Supabase oder visuellen Browsertests in dieser Umgebung.
+- `node --test tests/mealTemplates.test.mjs`: zwölf Tests, unter anderem Portionsrechnung, gewogenes Fertiggewicht, individuelle Zutatenmengen, Datums- und Eingabegrenzen sowie Ergänzung alter Vorlagen ohne Überschreiben persönlicher Angaben.
+- React-DOM-Prüfung mit jsdom und simulierten Serveraktionen: Plus → sechs Gerichte → Portionen → Eintrag am ausgewählten Datum → Bestätigung; Fehler und Wiederholungsschutz; Vorschau und Schreibsperre bei fehlender Migration.
+- Produktionsbuild, TypeScript und gezieltes ESLint.
+
+Keine angemeldeten Ende-zu-Ende-Tests gegen die persönliche Supabase-Datenbank. Chromium konnte in dieser Umgebung nicht installiert werden; die DOM-Prüfung ersetzt keine visuelle Browserprüfung.

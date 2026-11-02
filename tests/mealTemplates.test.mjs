@@ -6,15 +6,15 @@ import { fileURLToPath } from 'node:url';
 const filename = fileURLToPath(new URL('../lib/mealTemplates.ts', import.meta.url));
 const compiled = { exports: {} };
 new Function('exports', ts.transpileModule(fs.readFileSync(filename, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText)(compiled.exports);
-const { starterMealTemplates, recipeBatchMacros, templateMealMacros, validateTemplate, validMealDate } = compiled.exports;
+const { starterMealTemplates, recipeBatchMacros, templateMealMacros, validateTemplate, validMealDate, resolveMealTemplate } = compiled.exports;
 const macros = { kcal: 200, protein_g: 20, carbs_g: 15, fat_g: 5 };
 const recipe = { key: 'test', name: 'Mealprep', mode: 'ingredients', servings: 3, batchWeightG: 900, totalMacros: null, ingredients: [{ name: 'Ingredient A', grams: 300, per100: macros }, { name: 'Ingredient B', grams: 150, per100: { kcal: 100, protein_g: 0, carbs_g: 20, fat_g: 2 } }] };
 
-test('six starter dishes contain no invented nutrition values', () => {
+test('six starter dishes are loggable estimates with complete cooking instructions', () => {
   assert.equal(starterMealTemplates.length, 6);
   assert.ok(starterMealTemplates.some(t => t.key === 'skyr-pesto-haehnchen'));
   assert.equal(starterMealTemplates.find(t => t.key === 'quark-muesli').ingredients[0].grams, 500);
-  for (const t of starterMealTemplates) { validateTemplate(t); assert.equal(recipeBatchMacros(t), null); }
+  for (const t of starterMealTemplates) { validateTemplate(t); assert.ok(recipeBatchMacros(t).kcal > 0); assert.equal(t.estimated, true); assert.ok(t.instructions.length >= 3); assert.ok(templateMealMacros(t, 1).kcal > 0); }
 });
 test('batch totals and portions scale without premature rounding', () => {
   assert.deepEqual(recipeBatchMacros(recipe), { kcal: 750, protein_g: 60, carbs_g: 75, fat_g: 18 });
@@ -33,7 +33,7 @@ test('individual amounts calculate exactly once and do not modify the recipe', (
   assert.throws(() => templateMealMacros(recipe, 1, 300, [100, 50]));
 });
 test('drafts and invalid quantity overrides cannot be logged', () => {
-  assert.throws(() => templateMealMacros(starterMealTemplates[0], 1));
+  assert.throws(() => templateMealMacros({ ...recipe, ingredients: [{ name: "Missing", grams: null, per100: null }] }, 1));
   for (const n of [0, -1, NaN, Infinity, 101]) assert.throws(() => templateMealMacros(recipe, n));
   assert.throws(() => templateMealMacros(recipe, 1, undefined, [100]));
   assert.throws(() => templateMealMacros(recipe, 1, undefined, [-100, 50]));
@@ -58,4 +58,30 @@ test('recipe validation bounds input and discards extra properties', () => {
 test('dates reject rollover, invalid days and non-date strings', () => {
   for (const date of ['2026-02-29', '2026-02-31', 'invalid', '2026-1-1']) assert.equal(validMealDate(date), false);
   for (const date of ['2024-02-29', '2026-11-02']) assert.equal(validMealDate(date), true);
+});
+
+test('saved starter drafts fill blanks without replacing personal amounts or instructions', () => {
+  const saved = { ...starterMealTemplates[0], estimated: false, instructions: ['Mein Schritt'], ingredients: [{ name: 'Magerquark', grams: 250, per100: null }, { name: 'Flohsamenschalen', grams: 0, per100: null }] };
+  const resolved = resolveMealTemplate(saved);
+  assert.equal(resolved.ingredients[0].grams, 250);
+  assert.equal(resolved.ingredients[1].grams, 0);
+  assert.deepEqual(resolved.instructions, ['Mein Schritt']);
+  assert.equal(resolved.estimated, true);
+  assert.ok(recipeBatchMacros(resolved));
+});
+test('liquid units and instructions survive save validation', () => {
+  const curry = validateTemplate(starterMealTemplates.find(t => t.key === 'haehnchen-curry'));
+  assert.equal(curry.ingredients.find(i => i.name === 'Alpro Kokos ohne Zucker').unit, 'ml');
+  assert.ok(curry.instructions.length);
+});
+
+test('legacy liquid fields and blank protein placeholder become usable suggestions', () => {
+  const oldCurry = { ...starterMealTemplates.find(t => t.key === 'haehnchen-curry'), ingredients: [{ name: 'Cremefine', grams: null, per100: null }], instructions: undefined, estimated: undefined };
+  const resolvedCurry = resolveMealTemplate(validateTemplate(oldCurry));
+  assert.equal(resolvedCurry.ingredients[0].unit, 'ml');
+  assert.equal(resolvedCurry.ingredients[0].grams, 150);
+  const oldPotatoes = { ...starterMealTemplates.find(t => t.key === 'drillinge-ajvar'), ingredients: [{ name: 'Proteinquelle', grams: null, per100: null }] };
+  const resolvedPotatoes = resolveMealTemplate(validateTemplate(oldPotatoes));
+  assert.equal(resolvedPotatoes.ingredients[0].name, 'Hähnchen');
+  assert.ok(recipeBatchMacros(resolvedPotatoes).kcal > 0);
 });

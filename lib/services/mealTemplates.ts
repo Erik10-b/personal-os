@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { starterMealTemplates, validateTemplate } from "@/lib/mealTemplates";
+import { starterMealTemplates, resolveMealTemplate, validateTemplate } from "@/lib/mealTemplates";
 import type { MealTemplate } from "@/lib/mealTemplates";
 
 export async function getMealTemplates() {
@@ -10,7 +10,7 @@ export async function getMealTemplates() {
   if (error && (error.code === "42P01" || error.code === "PGRST205")) return { templates: starterMealTemplates, storageReady: false };
   if (error) throw error;
   const saved = new Map<string, MealTemplate>();
-  for (const row of data ?? []) saved.set(row.template_key, validateTemplate({ ...row.recipe, key: row.template_key }));
+  for (const row of data ?? []) saved.set(row.template_key, resolveMealTemplate(validateTemplate({ ...row.recipe, key: row.template_key })));
   return {
     templates: [...starterMealTemplates.map(t => saved.get(t.key) ?? t), ...[...saved.values()].filter(t => !starterMealTemplates.some(s => s.key === t.key))],
     storageReady: true,
