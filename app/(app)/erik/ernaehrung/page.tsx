@@ -1,3 +1,6 @@
+import { MealLibrary } from "@/components/nutrition/MealLibrary";
+import { getMealTemplates } from "@/lib/services/mealTemplates";
+import { validMealDate } from "@/lib/mealTemplates";
 import { NutritionTargets } from "@/components/training/NutritionTargets";
 import { readNutritionGoals } from "@/lib/nutritionGoals";
 import { createClient } from "@/lib/supabase/server";
@@ -22,9 +25,13 @@ export default async function ErnaehrungPage({
 }) {
   const { date } = await searchParams;
   const today = localDateKey();
-  const activeDate = date ?? today;
+  const activeDate = date && validMealDate(date) ? date : today;
 
-  const meals = await getMealsForDate(activeDate);
+  const [meals, previousMeals, library] = await Promise.all([
+    getMealsForDate(activeDate),
+    getMealsForDate(shiftDate(activeDate, -1)),
+    getMealTemplates(),
+  ]);
   const totals = sumMacros(meals);
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -36,7 +43,7 @@ export default async function ErnaehrungPage({
       <div className="page-head">
         <div>
           <h1>Ernährung</h1>
-          <p>Mahlzeiten und Makros manuell erfassen.</p>
+          <p>Deine Gerichte. Deine Mengen. Mit wenigen Tipps eingetragen.</p>
         </div>
       </div>
 
@@ -57,6 +64,9 @@ export default async function ErnaehrungPage({
 
       <NutritionTargets totals={totals} goals={goals} configured={configured} />
 
+      <MealLibrary templates={library.templates} date={activeDate} previousMeals={previousMeals} storageReady={library.storageReady} />
+
+      <details className="meal-manual"><summary>Einmalige Mahlzeit manuell eintragen</summary>
       <form
         action={createMeal}
         className="card"
@@ -65,7 +75,7 @@ export default async function ErnaehrungPage({
         <input type="hidden" name="eaten_on" value={activeDate} />
         <div className="form-row" style={{ flex: 2, minWidth: 160 }}>
           <label htmlFor="name">Mahlzeit</label>
-          <input className="input" id="name" name="name" placeholder="z.B. Haferflocken mit Banane" required />
+          <input className="input" id="name" name="name" placeholder="z.B. Skyr mit Obst" required />
         </div>
         <div className="form-row" style={{ maxWidth: 100 }}>
           <label htmlFor="kcal">kcal</label>
@@ -87,11 +97,13 @@ export default async function ErnaehrungPage({
           Hinzufügen
         </SubmitButton>
       </form>
+      </details>
 
+      <h2 style={{ margin: "24px 0 12px" }}>Eingetragen an diesem Tag</h2>
       {meals.length === 0 ? (
         <EmptyState>Noch keine Mahlzeiten an diesem Tag.</EmptyState>
       ) : (
-        <div className="card">
+        <div className="card meal-day-log">
           <table className="k-table">
             <thead>
               <tr>
