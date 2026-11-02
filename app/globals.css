@@ -1,3 +1,4 @@
+@import "./nutrition.css";
 :root {
   /* --font-sans (Outfit) wird über next/font in app/layout.tsx self-hosted
      und als CSS-Variable gesetzt. Kabinski nutzt für alle Texte – auch
