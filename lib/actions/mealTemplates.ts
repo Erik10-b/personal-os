@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { macroKeys, starterMealTemplates, templateMealMacros, validMealDate, validateTemplate } from "@/lib/mealTemplates";
+import { macroKeys, starterMealTemplates, resolveMealTemplate, templateMealMacros, validMealDate, validateTemplate } from "@/lib/mealTemplates";
 import type { MealTemplate, Macros } from "@/lib/mealTemplates";
 
 async function authenticated() {
@@ -36,10 +36,10 @@ export async function logMealTemplate(input: { key: string; date: string; entryK
   if (readError) throw readError;
   const raw = data?.recipe ?? starterMealTemplates.find(t => t.key === input.key);
   if (!raw) throw new Error("Gericht nicht gefunden");
-  const recipe = validateTemplate(raw);
+  const recipe = resolveMealTemplate(validateTemplate(raw));
   const macros = rounded(templateMealMacros(recipe, input.portions, input.grams, input.ingredientGrams));
   const quantity = input.ingredientGrams ? "angepasste Zutatenmengen" : input.grams !== undefined ? `${input.grams} g` : `${input.portions.toLocaleString("de-DE")} Portion${input.portions === 1 ? "" : "en"}`;
-  const { error } = await db.from("meals").upsert({ user_id: userId, eaten_on: input.date, entry_key: input.entryKey, name: `${recipe.name} · ${quantity}`, ...macros }, { onConflict: "user_id,entry_key", ignoreDuplicates: true });
+  const { error } = await db.from("meals").upsert({ user_id: userId, eaten_on: input.date, entry_key: input.entryKey, name: `${recipe.name} · ${quantity}${recipe.estimated ? " · ca." : ""}`, ...macros }, { onConflict: "user_id,entry_key", ignoreDuplicates: true });
   if (error) throw error;
   refresh();
 }
