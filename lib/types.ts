@@ -126,6 +126,7 @@ export interface MatchRow {
 }
 
 export interface WorkoutSessionRow {
+  effort_score?: number | null;
   id: string;
   user_id: string;
   session_date: string;
@@ -136,6 +137,8 @@ export interface WorkoutSessionRow {
 }
 
 export interface WorkoutExerciseRow {
+  note?: string | null;
+  order_index?: number;
   id: string;
   session_id: string;
   user_id: string;
@@ -147,6 +150,7 @@ export interface WorkoutExerciseRow {
 }
 
 export interface WorkoutSetRow {
+  is_done?: boolean;
   id: string;
   exercise_id: string;
   user_id: string;

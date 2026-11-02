@@ -58,10 +58,11 @@ export async function getWorkoutSessions(limit = 60): Promise<WorkoutSessionWith
   return sessions.map((session) => ({
     ...session,
     exercises: (exercisesBySession.get(session.id) ?? [])
-      .sort((a, b) => a.created_at.localeCompare(b.created_at))
+      .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0) || a.created_at.localeCompare(b.created_at))
+      .filter(e => !session.completed_at || !(setsByExercise.get(e.id)?.length) || setsByExercise.get(e.id)!.some(s => s.is_done !== false))
       .map((e) => ({
         ...e,
-        sets_list: (setsByExercise.get(e.id) ?? []).sort((a, b) => a.position - b.position),
+        sets_list: (setsByExercise.get(e.id) ?? []).filter(s => !session.completed_at || s.is_done !== false).sort((a, b) => a.position - b.position),
       })),
   }));
 }
