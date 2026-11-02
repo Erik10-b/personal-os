@@ -1,3 +1,4 @@
+import { OptimisticToggle } from "@/components/ui/OptimisticToggle";
 import { HabitWithLogs } from "@/lib/services/habits";
 import { archiveHabit, toggleHabitLog } from "@/lib/actions/habits";
 import { getTodayKey } from "@/lib/habitUtils";
@@ -62,17 +63,7 @@ export function HabitMatrix({ habits, days }: { habits: HabitWithLogs[]; days: s
                         key={day}
                         className={`hm-td-cell${isToday ? " today" : ""}${!isMobileVisible(i) ? " hm-mobile-hide" : ""}`}
                       >
-                        <form action={toggleHabitLog} style={{ display: "block", width: "100%", lineHeight: 0 }}>
-                          <input type="hidden" name="habit_id" value={habit.id} />
-                          <input type="hidden" name="log_date" value={day} />
-                          <input type="hidden" name="checked" value={String(checked)} />
-                          <button
-                            type="submit"
-                            className={`habit-cell${checked ? " done" : ""}`}
-                            title={`${habit.name} · ${day}`}
-                            aria-label={`${day}${checked ? " erledigt" : ""}`}
-                          />
-                        </form>
+                        <OptimisticToggle action={toggleHabitLog} values={{ habit_id: habit.id, log_date: day }} checked={checked} field="checked" label={habit.name + " · " + day} className="habit-cell" checkedClass="done" style={{ display: "block", width: "100%", lineHeight: 0 }}/>
                       </td>
                     );
                   })}

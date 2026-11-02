@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { localDateKey } from "@/lib/dateUtils";
 import Link from "next/link";
 import {
@@ -89,9 +90,9 @@ export default async function FinanziellesPage() {
           <label htmlFor="net_worth_note">Notiz</label>
           <input className="input" id="net_worth_note" name="note" placeholder="optional" />
         </div>
-        <button type="submit" className="btn primary">
+        <SubmitButton type="submit" className="btn primary">
           Snapshot speichern
-        </button>
+        </SubmitButton>
       </form>
 
       {transactions.length === 0 ? (

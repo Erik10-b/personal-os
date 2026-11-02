@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import Link from "next/link";
 import { getHabitsWithLogs, HabitWithLogs } from "@/lib/services/habits";
 import { createHabit } from "@/lib/actions/habits";
@@ -37,9 +38,9 @@ export default async function HabitsPage({
             required
             style={{ minWidth: 160 }}
           />
-          <button type="submit" className="btn primary sm">
+          <SubmitButton type="submit" className="btn primary sm">
             Anlegen
-          </button>
+          </SubmitButton>
         </form>
       </div>
 

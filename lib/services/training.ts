@@ -10,6 +10,24 @@ export interface WorkoutSessionWithExercises extends WorkoutSessionRow {
   exercises: WorkoutExerciseWithSets[];
 }
 
+/**
+ * `.in()` landet als Query-String in der URL — bei hunderten UUIDs wird die zu lang
+ * (HeadersOverflowError). Daher in Paketen abfragen — klein genug, dass auch Supabases
+ * Standard-Limit von 1000 Zeilen pro Antwort nicht greift.
+ */
+const IN_CHUNK = 50;
+
+async function selectIn<T>(
+  ids: string[],
+  query: (chunk: string[]) => PromiseLike<{ data: T[] | null; error: unknown }>
+): Promise<T[]> {
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += IN_CHUNK) chunks.push(ids.slice(i, i + IN_CHUNK));
+  const results = await Promise.all(chunks.map((chunk) => query(chunk)));
+  for (const r of results) if (r.error) throw r.error;
+  return results.flatMap((r) => r.data ?? []);
+}
+
 export async function getWorkoutSessions(limit = 60): Promise<WorkoutSessionWithExercises[]> {
   const supabase = await createClient();
 
@@ -23,31 +41,28 @@ export async function getWorkoutSessions(limit = 60): Promise<WorkoutSessionWith
   if (sessionsError) throw sessionsError;
   if (!sessions || sessions.length === 0) return [];
 
-  const { data: exercises, error: exercisesError } = await supabase
-    .from("workout_exercises")
-    .select("*")
-    .in("session_id", sessions.map((s) => s.id))
-    .order("created_at", { ascending: true });
+  const exercises = await selectIn<WorkoutExerciseRow>(sessions.map((s) => s.id), (chunk) =>
+    supabase.from("workout_exercises").select("*").in("session_id", chunk).order("created_at", { ascending: true })
+  );
 
-  if (exercisesError) throw exercisesError;
+  const sets = await selectIn<WorkoutSetRow>(exercises.map((e) => e.id), (chunk) =>
+    supabase.from("workout_sets").select("*").in("exercise_id", chunk).order("position", { ascending: true })
+  );
 
-  const exerciseIds = (exercises ?? []).map((e) => e.id);
-  let sets: WorkoutSetRow[] = [];
-  if (exerciseIds.length > 0) {
-    const { data: setsData, error: setsError } = await supabase
-      .from("workout_sets")
-      .select("*")
-      .in("exercise_id", exerciseIds)
-      .order("position", { ascending: true });
-    if (setsError) throw setsError;
-    sets = setsData ?? [];
-  }
+  // Pakete kommen getrennt sortiert zurück — deshalb hier gruppieren und nachsortieren.
+  const setsByExercise = new Map<string, WorkoutSetRow[]>();
+  for (const s of sets) setsByExercise.set(s.exercise_id, [...(setsByExercise.get(s.exercise_id) ?? []), s]);
+  const exercisesBySession = new Map<string, WorkoutExerciseRow[]>();
+  for (const e of exercises) exercisesBySession.set(e.session_id, [...(exercisesBySession.get(e.session_id) ?? []), e]);
 
   return sessions.map((session) => ({
     ...session,
-    exercises: (exercises ?? [])
-      .filter((e) => e.session_id === session.id)
-      .map((e) => ({ ...e, sets_list: sets.filter((s) => s.exercise_id === e.id) })),
+    exercises: (exercisesBySession.get(session.id) ?? [])
+      .sort((a, b) => a.created_at.localeCompare(b.created_at))
+      .map((e) => ({
+        ...e,
+        sets_list: (setsByExercise.get(e.id) ?? []).sort((a, b) => a.position - b.position),
+      })),
   }));
 }
 

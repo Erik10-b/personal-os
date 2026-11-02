@@ -1,3 +1,5 @@
+import { SubmitButton } from "@/components/ui/SubmitButton";
+import { OptimisticToggle } from "@/components/ui/OptimisticToggle";
 import { TodoArea, TodoRow } from "@/lib/types";
 import { createTodo, deleteTodo, toggleTodo } from "@/lib/actions/todos";
 import { EmptyState } from "@/components/ui/Card";
@@ -14,9 +16,9 @@ export function TodoList({ area, todos }: { area: TodoArea; todos: TodoRow[] }) 
         <input type="hidden" name="area" value={area} />
         <input className="input" name="title" placeholder="Neue Aufgabe…" required style={{ flex: 1 }} />
         <input className="input mono" name="due_date" type="date" style={{ maxWidth: 160 }} />
-        <button type="submit" className="btn primary">
+        <SubmitButton type="submit" className="btn primary">
           +
-        </button>
+        </SubmitButton>
       </form>
 
       {todos.length === 0 ? (
@@ -34,12 +36,7 @@ export function TodoList({ area, todos }: { area: TodoArea; todos: TodoRow[] }) 
                 opacity: todo.done ? 0.55 : 1,
               }}
             >
-              <form action={toggleTodo}>
-                <input type="hidden" name="id" value={todo.id} />
-                <input type="hidden" name="area" value={area} />
-                <input type="hidden" name="done" value={String(todo.done)} />
-                <button type="submit" className={`checkbox ${todo.done ? "checked" : ""}`} aria-label="erledigt" />
-              </form>
+              <OptimisticToggle action={toggleTodo} values={{ id: todo.id, area: area }} checked={todo.done} field="done" label={todo.title}/>
 
               <span
                 style={{

@@ -16,7 +16,7 @@ export const MODULE_ICONS: Record<string, React.ReactElement> = {
   ),
   finanzielles: (
     <svg {...common}>
-      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+      <path d="M18 5a7 7 0 0 0-4-1c-4 0-7 3-7 8s3 8 7 8a7 7 0 0 0 4-1M4 10h11M4 14h10" />
     </svg>
   ),
   erik: (
@@ -51,4 +51,22 @@ export const MODULE_ICONS: Record<string, React.ReactElement> = {
       <path d="M6.5 12h11" />
     </svg>
   ),
-};
+  todos: (
+    <svg {...common}>
+      <rect x="4" y="3" width="16" height="18" rx="3" />
+      <path d="m8 9 1.5 1.5L12 8M14 9h3M8 16h9" />
+    </svg>
+  ),
+  goals: (
+    <svg {...common}>
+      <circle cx="12" cy="12" r="8" />
+      <circle cx="12" cy="12" r="4" />
+      <path d="m12 12 8-8M16 4h4v4" />
+    </svg>
+  ),
+  nutrition: (
+    <svg {...common}>
+      <path d="M12 7c-2-3-7-2-7 3 0 5 3 10 5 10 1 0 1-1 2-1s1 1 2 1c2 0 5-5 5-10 0-5-5-6-7-3Z" />
+      <path d="M12 7c0-3 1-5 4-5 0 3-1 4-4 5Z" />
+    </svg>
+  ),};

@@ -1,4 +1,5 @@
 "use client";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 import { useRef } from "react";
 import { createMatch } from "@/lib/actions/matches";
@@ -50,9 +51,9 @@ export function MatchForm() {
         <label htmlFor="note">Notiz</label>
         <input className="input" id="note" name="note" placeholder="optional" />
       </div>
-      <button type="submit" className="btn primary">
+      <SubmitButton type="submit" className="btn primary">
         Spiel eintragen
-      </button>
+      </SubmitButton>
     </form>
   );
 }

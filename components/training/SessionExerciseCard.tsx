@@ -3,6 +3,10 @@
 import { FocusEvent } from "react";
 import { addSet, deleteExercise, deleteSet, updateSet } from "@/lib/actions/training";
 import { WorkoutExerciseWithSets } from "@/lib/services/training";
+import type { NormalizedSet } from "@/lib/trainingUtils";
+import { formatWeight } from "@/lib/trainingUtils";
+import type { Suggestion } from "@/lib/trainingCoach";
+import { startRest, stopRest, useDoneSets } from "./RestTimer";
 
 const capStyle: React.CSSProperties = {
   fontSize: 9,
@@ -15,12 +19,22 @@ const capStyle: React.CSSProperties = {
 export function SessionExerciseCard({
   exercise,
   prevSummary,
+  prevSets,
+  suggestion,
 }: {
   exercise: WorkoutExerciseWithSets;
   prevSummary?: string;
+  prevSets?: NormalizedSet[];
+  suggestion?: Suggestion | null;
 }) {
   const submit = (e: FocusEvent<HTMLInputElement>) => e.currentTarget.form?.requestSubmit();
   const sets = [...exercise.sets_list].sort((a, b) => a.position - b.position);
+  const { done, toggle } = useDoneSets(exercise.session_id);
+
+  function toggleSet(setId: string) {
+    if (toggle(setId)) startRest();
+    else stopRest();
+  }
 
   return (
     <div
@@ -40,6 +54,12 @@ export function SessionExerciseCard({
               Letztes Mal: {prevSummary}
             </span>
           )}
+          {suggestion && (
+            <span className="set-suggestion" title={suggestion.reason}>
+              Vorschlag heute: <strong>{suggestion.label}</strong>
+              <small>{suggestion.reason}</small>
+            </span>
+          )}
         </div>
         <form action={deleteExercise}>
           <input type="hidden" name="id" value={exercise.id} />
@@ -54,13 +74,19 @@ export function SessionExerciseCard({
         <span style={{ ...capStyle, width: 48 }}>Satz</span>
         <span style={{ ...capStyle, flex: 1, textAlign: "center" }}>kg</span>
         <span style={{ ...capStyle, flex: 1, textAlign: "center" }}>Wdh.</span>
+        <span style={{ width: 40 }} />
         <span style={{ width: 30 }} />
       </div>
 
       {sets.map((set, i) => (
-        <div key={set.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "3px 4px" }}>
-          <span style={{ width: 48, fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 600 }}>
+        <div key={set.id} className={`set-row${done.has(set.id) ? " done" : ""}`} style={{ display: "flex", alignItems: "center", gap: 8, padding: "3px 4px" }}>
+          <span style={{ width: 48, fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 600, display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
             {i + 1}.
+            {prevSets?.[i] && (
+              <span className="set-prev" title="Dieser Satz beim letzten Mal">
+                {prevSets[i].weight_kg > 0 ? `${formatWeight(prevSets[i].weight_kg)}×${prevSets[i].reps}` : `${prevSets[i].reps} Wdh.`}
+              </span>
+            )}
           </span>
           <form action={updateSet} style={{ display: "contents" }}>
             <input type="hidden" name="id" value={set.id} />
@@ -86,6 +112,15 @@ export function SessionExerciseCard({
               style={{ flex: 1, minWidth: 0, textAlign: "center", padding: "9px 4px", fontSize: 14 }}
             />
           </form>
+          <button
+            type="button"
+            className="set-check"
+            onClick={() => toggleSet(set.id)}
+            aria-pressed={done.has(set.id)}
+            aria-label={`Satz ${i + 1} ${done.has(set.id) ? "nicht mehr abhaken" : "abhaken und Pause starten"}`}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
+          </button>
           <form action={deleteSet} style={{ width: 30, display: "flex", justifyContent: "center" }}>
             <input type="hidden" name="id" value={set.id} />
             <button

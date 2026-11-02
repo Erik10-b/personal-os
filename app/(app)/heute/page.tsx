@@ -1,347 +1,47 @@
-import { localDateKey } from "@/lib/dateUtils";
-import Link from "next/link";
+import { OptimisticToggle } from "@/components/ui/OptimisticToggle";
+import Link from "@/components/nav/NavigationLink";
 import { getDashboardData } from "@/lib/services/dashboard";
 import { getRecentActivity } from "@/lib/services/activity";
 import { getNetWorthSnapshots } from "@/lib/services/netWorth";
 import { getGoals } from "@/lib/services/goals";
 import { getMealsForDate, sumMacros } from "@/lib/services/meals";
+import { localDateKey } from "@/lib/dateUtils";
 import { toggleHabitLog } from "@/lib/actions/habits";
 import { toggleTodo } from "@/lib/actions/todos";
 import { toggleGoal } from "@/lib/actions/goals";
-import { EmptyState } from "@/components/ui/Card";
 import { ActivityFeed } from "@/components/activity/ActivityFeed";
-import { HeroBanner } from "@/components/dashboard/HeroBanner";
+import { Avatar } from "@/components/ui/Avatar";
 
-function greeting(hour: number): string {
-  if (hour < 5) return "Gute Nacht";
-  if (hour < 11) return "Guten Morgen";
-  if (hour < 17) return "Hallo";
-  if (hour < 22) return "Guten Abend";
-  return "Gute Nacht";
-}
-
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-}
-
-function formatEuro(cents: number) {
-  return (cents / 100).toLocaleString("de-DE", { style: "currency", currency: "EUR" });
-}
+const euro = (value: number) => (value / 100).toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+const time = (value: string) => new Date(value).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
 export default async function HeutePage() {
-  const todayStr0 = localDateKey();
-  const [data, activity, netWorthSnapshots, weekGoals, todayMeals] = await Promise.all([
-    getDashboardData(),
-    getRecentActivity(8),
-    getNetWorthSnapshots(2),
-    getGoals("week"),
-    getMealsForDate(todayStr0),
-  ]);
-  const name = "Erik";
-
+  const [data, activity, snapshots, goals, meals] = await Promise.all([getDashboardData(), getRecentActivity(4), getNetWorthSnapshots(2), getGoals("week"), getMealsForDate(localDateKey())]);
+  const done = data.habits.filter(h => h.doneToday).length;
+  const percent = data.habits.length ? Math.round(done / data.habits.length * 100) : 0;
+  const macros = sumMacros(meals);
+  const latestWorth = snapshots.at(-1);
+  const openGoals = goals.filter(g => !g.done);
+  const focusTodos = Array.from(new Map([...data.keyTodos, ...data.dueTodos].map(todo => [todo.id, todo])).values());
   const now = new Date();
-  const dateLabel = now.toLocaleDateString("de-DE", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-
-  const openHabits = data.habits.filter((h) => !h.doneToday).length;
-  const latestNetWorth = netWorthSnapshots[netWorthSnapshots.length - 1];
-  const prevNetWorth = netWorthSnapshots[netWorthSnapshots.length - 2];
-  const netWorthDelta = latestNetWorth && prevNetWorth ? latestNetWorth.amount - prevNetWorth.amount : 0;
-  const mealTotals = sumMacros(todayMeals);
-  const openWeekGoals = weekGoals.filter((g) => !g.done);
-
-  const summaryLine = `${data.todayEvents.length} Termine · ${data.dueTodos.length} fällig · ${data.habits.length - openHabits}/${data.habits.length} Habits`;
-
-  return (
-    <>
-      <HeroBanner
-        greeting={greeting(now.getHours())}
-        name={name}
-        dateLabel={dateLabel}
-        summary={summaryLine}
-      />
-
-      <div className="dashboard-grid">
-        {/* Linke Spalte: Operator, Finance Pulse, Key Blockers */}
-        <div className="dashboard-col">
-          <div className="card">
-            <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-tertiary)", marginBottom: "var(--space-3)" }}>
-              Operator
-            </div>
-            <div style={{ display: "flex", gap: "var(--space-4)", marginBottom: "var(--space-4)" }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-tertiary)" }}>Habits heute</div>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: 20, fontWeight: 600 }}>
-                  {data.habits.length - openHabits}/{data.habits.length}
-                </div>
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-tertiary)" }}>Gewicht</div>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: 20, fontWeight: 600 }}>
-                  {data.latestWeight ? `${data.latestWeight.weight_kg} kg` : "–"}
-                </div>
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
-              <Link href="/termine" className="btn secondary sm">+ Termin</Link>
-              <Link href="/finanzielles/neu" className="btn secondary sm">+ Buchung</Link>
-              <Link href="/erik/todos" className="btn secondary sm">+ Aufgabe</Link>
-              <Link href="/erik/gewicht" className="btn secondary sm">+ Gewicht</Link>
-            </div>
-          </div>
-
-          <div className="card">
-            <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-tertiary)", marginBottom: "var(--space-3)" }}>
-              Finance Pulse
-            </div>
-            <div style={{ display: "flex", gap: "var(--space-4)" }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-tertiary)" }}>Saldo (Monat)</div>
-                <div className={`kpi-value ${data.month.balance >= 0 ? "club" : "danger"}`} style={{ fontSize: 20 }}>
-                  {formatEuro(data.month.balance)}
-                </div>
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-tertiary)" }}>Vermögen</div>
-                <div className="kpi-value" style={{ fontSize: 20 }}>
-                  {latestNetWorth ? formatEuro(latestNetWorth.amount) : "–"}
-                  {netWorthDelta !== 0 && (
-                    <span
-                      style={{ fontSize: 11, marginLeft: 6, color: netWorthDelta > 0 ? "var(--success)" : "var(--danger)" }}
-                    >
-                      {netWorthDelta > 0 ? "+" : ""}
-                      {formatEuro(netWorthDelta)}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-            <Link href="/finanzielles" className="btn ghost sm" style={{ marginTop: "var(--space-3)" }}>
-              Details →
-            </Link>
-          </div>
-
-          <div className="card">
-            <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-tertiary)", marginBottom: "var(--space-3)" }}>
-              Key Blockers
-            </div>
-            {data.keyTodos.length === 0 ? (
-              <EmptyState>Keine Schlüsselaufgaben offen.</EmptyState>
-            ) : (
-              <div className="card-list">
-                {data.keyTodos.map((todo) => (
-                  <div key={todo.id} style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-                    <form action={toggleTodo}>
-                      <input type="hidden" name="id" value={todo.id} />
-                      <input type="hidden" name="area" value={todo.area} />
-                      <input type="hidden" name="done" value="false" />
-                      <button type="submit" className="checkbox" aria-label="erledigt" />
-                    </form>
-                    <span style={{ flex: 1, fontSize: 13 }}>⭐ {todo.title}</span>
-                    {todo.due_date && (
-                      <span className={`badge ${todo.due_date < data.todayStr ? "danger" : "neutral"} mono`}>
-                        {new Date(todo.due_date).toLocaleDateString("de-DE")}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Mittlere Spalte: Session, Habit Tracker, Priorities */}
-        <div className="dashboard-col">
-          <div className="card">
-            <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-tertiary)", marginBottom: "var(--space-3)" }}>
-              Session — Heute
-            </div>
-            {data.todayEvents.length === 0 ? (
-              <EmptyState>Keine Termine heute.</EmptyState>
-            ) : (
-              <div className="card-list">
-                {data.todayEvents.map((event) => {
-                  const startedEarlier = localDateKey(new Date(event.starts_at)) < data.todayStr;
-                  return (
-                    <div key={event.id} style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--club)", minWidth: 44 }}>
-                        {startedEarlier ? "läuft" : formatTime(event.starts_at)}
-                      </span>
-                      <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{event.title}</span>
-                      {event.category && <span className="badge neutral">{event.category}</span>}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          <div className="card">
-            <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-tertiary)", marginBottom: "var(--space-3)" }}>
-              Habit Tracker
-            </div>
-            {data.habits.length === 0 ? (
-              <EmptyState>Keine Habits angelegt.</EmptyState>
-            ) : (
-              <div>
-                {/* Kopfzeile: 4 Tage (vorgestern, gestern, heute, morgen) */}
-                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", marginBottom: 6 }}>
-                  <span style={{ flex: 1 }} />
-                  {data.habitDays.map((day) => {
-                    const isToday = day === data.todayStr;
-                    const label = new Date(day + "T00:00:00").toLocaleDateString("de-DE", { weekday: "short" });
-                    return (
-                      <span
-                        key={day}
-                        style={{
-                          width: 30,
-                          textAlign: "center",
-                          fontFamily: "var(--font-mono)",
-                          fontSize: 9,
-                          textTransform: "uppercase",
-                          color: isToday ? "var(--club)" : "var(--text-tertiary)",
-                          fontWeight: isToday ? 700 : 500,
-                        }}
-                      >
-                        {label}
-                      </span>
-                    );
-                  })}
-                </div>
-
-                <div className="card-list">
-                  {data.habits.map(({ habit, doneByDate }) => (
-                    <div key={habit.id} style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
-                      <span style={{ flex: 1, fontSize: 13, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {habit.name}
-                      </span>
-                      {data.habitDays.map((day) => {
-                        const checked = doneByDate[day];
-                        const isToday = day === data.todayStr;
-                        return (
-                          <form key={day} action={toggleHabitLog} style={{ width: 30, display: "flex", justifyContent: "center" }}>
-                            <input type="hidden" name="habit_id" value={habit.id} />
-                            <input type="hidden" name="log_date" value={day} />
-                            <input type="hidden" name="checked" value={String(checked)} />
-                            <button
-                              type="submit"
-                              className={`habit-cell${checked ? " done" : ""}`}
-                              title={`${habit.name} · ${new Date(day + "T00:00:00").toLocaleDateString("de-DE")}`}
-                              aria-label={`${day}${checked ? " erledigt" : ""}`}
-                              style={isToday ? { boxShadow: "0 0 0 2px var(--border-club)" } : undefined}
-                            />
-                          </form>
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="card">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-3)" }}>
-              <span style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-tertiary)" }}>
-                Priorities — Diese Woche
-              </span>
-              <Link href="/erik/goals" className="btn ghost sm">Alle →</Link>
-            </div>
-            {openWeekGoals.length === 0 ? (
-              <EmptyState>Keine offenen Wochenziele.</EmptyState>
-            ) : (
-              <div className="card-list">
-                {openWeekGoals.map((goal) => (
-                  <div key={goal.id} style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-                    <form action={toggleGoal}>
-                      <input type="hidden" name="id" value={goal.id} />
-                      <input type="hidden" name="done" value="false" />
-                      <button type="submit" className="checkbox" aria-label="erledigt" />
-                    </form>
-                    <span style={{ flex: 1, fontSize: 13 }}>{goal.title}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Fällige Aufgaben */}
-          <div className="card">
-            <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-tertiary)", marginBottom: "var(--space-3)" }}>
-              Fällig
-            </div>
-            {data.dueTodos.length === 0 ? (
-              <EmptyState>Nichts fällig. 🎉</EmptyState>
-            ) : (
-              <div className="card-list">
-                {data.dueTodos.map((todo) => {
-                  const overdue = todo.due_date! < data.todayStr;
-                  return (
-                    <div key={todo.id} style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-                      <form action={toggleTodo}>
-                        <input type="hidden" name="id" value={todo.id} />
-                        <input type="hidden" name="area" value={todo.area} />
-                        <input type="hidden" name="done" value="false" />
-                        <button type="submit" className="checkbox" aria-label="erledigt" />
-                      </form>
-                      <span style={{ flex: 1, fontSize: 13 }}>{todo.title}</span>
-                      <span className={`badge ${overdue ? "danger" : "neutral"}`}>
-                        {overdue ? "überfällig" : "heute"}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Rechte Spalte: Nutrition, Letzte Aktivität */}
-        <div className="dashboard-col">
-          <div className="card">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-3)" }}>
-              <span style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-tertiary)" }}>
-                Nutrition
-              </span>
-              <Link href="/erik/ernaehrung" className="btn ghost sm">+ Mahlzeit</Link>
-            </div>
-            <div style={{ display: "flex", gap: "var(--space-3)", marginBottom: "var(--space-3)" }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-tertiary)" }}>kcal</div>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 600 }}>{mealTotals.kcal}</div>
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-tertiary)" }}>P / C / F</div>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: 13 }}>
-                  {mealTotals.protein_g} / {mealTotals.carbs_g} / {mealTotals.fat_g}
-                </div>
-              </div>
-            </div>
-            {todayMeals.length === 0 ? (
-              <EmptyState>Noch keine Mahlzeiten heute.</EmptyState>
-            ) : (
-              <div className="card-list">
-                {todayMeals.map((meal) => (
-                  <div key={meal.id} style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-                    <span style={{ flex: 1, fontSize: 13 }}>{meal.name}</span>
-                    <span className="badge neutral mono">{meal.kcal} kcal</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="card">
-            <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-tertiary)", marginBottom: "var(--space-3)" }}>
-              Letzte Aktivität
-            </div>
-            <ActivityFeed items={activity} />
-          </div>
-        </div>
+  return <div className="neka-dashboard">
+    <header className="neka-top"><div className="neka-welcome"><span>Hallo,</span><h1>Erik.</h1></div><div className="neka-top-right"><time dateTime={data.todayStr}>{now.toLocaleDateString("de-DE", { weekday: "short", day: "numeric", month: "long", year: "numeric" })}</time><Link href="/termine" className="neka-icon-link" aria-label="Kalender öffnen">{<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4m8-4v4M4 11h16"/></svg>}</Link><div className="neka-profile"><Avatar fallback={<span>EW</span>} size={36}/><i/></div></div></header>
+    <div className="neka-overview">
+      <section className="neka-portrait" aria-label="Dein persönlicher Überblick"><div className="neka-portrait-art" role="img" aria-label="Fußballspieler im ruhigen Seitenprofil"/><div className="neka-portrait-label label-one"><span>Routinen</span><strong>{done}<small> / {data.habits.length}</small></strong><em>Routinen heute</em></div><div className="neka-portrait-label label-two"><span>Gewicht</span><strong>{data.latestWeight?.weight_kg ?? "–"}<small> kg</small></strong><em>Letzter Eintrag</em></div><div className="neka-portrait-label label-three"><span>Wochenziele</span><strong>{openGoals.length}<small> Ziele</small></strong><em>Diese Woche offen</em></div><div className="neka-portrait-caption"><Link href="/training">Training öffnen <span className="desktop-arrow" aria-hidden="true">↗</span></Link></div></section>
+      <div className="neka-metrics">
+        <Link href="/erik/habits" className="neka-metric mint"><div className="neka-metric-head">Routinen <span className="desktop-arrow" aria-hidden="true">↗</span></div><strong>{done}<small> / {data.habits.length}</small></strong><span className="neka-unit">heute erledigt</span><div className="neka-routine-dots" aria-hidden="true">{data.habits.length ? data.habits.map(h => <i key={h.habit.id} className={h.doneToday ? "filled" : ""}/>) : <span>Keine Routinen angelegt.</span>}</div><div className="neka-metric-foot"><span>Heute erledigt</span><span>{percent}%</span></div></Link>
+        <Link href="/finanzielles" className="neka-metric peach"><div className="neka-metric-head">Monatssaldo <span className="desktop-arrow" aria-hidden="true">↗</span></div><strong className="neka-money">{euro(data.month.balance)}</strong><span className="neka-unit">Einnahmen − Ausgaben</span><div className="neka-finance-comparison"><span>Einnahmen <b>{euro(data.month.income)}</b></span><span>Ausgaben <b>{euro(data.month.expense)}</b></span></div><div className="neka-metric-foot"><span>Dieser Monat</span><span>{data.month.balance >= 0 ? "Im Plus" : "Im Minus"}</span></div></Link>
+        <Link href="/erik/gewicht" className="neka-metric plain"><div className="neka-metric-head">Körpergewicht <span className="desktop-arrow" aria-hidden="true">↗</span></div><strong>{data.latestWeight?.weight_kg ?? "–"}</strong><span className="neka-unit">Kilogramm</span><div className="neka-weight-symbol" aria-hidden="true"><span/><span/><span/><span/><span/><span/><span/><span/><span/></div><div className="neka-metric-foot"><span>{data.latestWeight ? "Zuletzt erfasst" : "Noch kein Eintrag"}</span><span>+ Eintragen</span></div></Link>
+        <Link href="/erik/ernaehrung" className="neka-metric plain"><div className="neka-metric-head">Ernährung <span className="desktop-arrow" aria-hidden="true">↗</span></div><strong>{macros.kcal.toLocaleString("de-DE")}</strong><span className="neka-unit">kcal heute</span><div className="neka-macro-bars">{[{name:"Protein",value:macros.protein_g},{name:"Carbs",value:macros.carbs_g},{name:"Fett",value:macros.fat_g}].map(m => <div key={m.name}><span>{m.name}</span><i><b style={{width:`${macros.protein_g + macros.carbs_g + macros.fat_g ? m.value / (macros.protein_g + macros.carbs_g + macros.fat_g) * 100 : 0}%`}}/></i><span>{m.value} g</span></div>)}</div><div className="neka-metric-foot"><span>{meals.length} Mahlzeiten</span><span>+ Erfassen</span></div></Link>
+        <Link href="/finanzielles" className="neka-metric rose"><div className="neka-metric-head">Vermögen <span className="desktop-arrow" aria-hidden="true">↗</span></div><strong className="neka-money">{latestWorth ? euro(latestWorth.amount) : "–"}</strong><span className="neka-unit">Letzter Vermögensstand</span><div className="neka-balance-orbit" aria-hidden="true"><i/></div><div className="neka-metric-foot"><span>Vermögensübersicht</span><span>Übersicht <span className="desktop-arrow" aria-hidden="true">↗</span></span></div></Link>
+        <Link href="/termine" className="neka-metric plain"><div className="neka-metric-head">Dein Tag <span className="desktop-arrow" aria-hidden="true">↗</span></div><strong>{data.todayEvents.length}</strong><span className="neka-unit">Termine heute</span><div className="neka-next-event">{data.todayEvents[0] ? <><b>{time(data.todayEvents[0].starts_at)}</b><span>{data.todayEvents[0].title}</span></> : <span>Keine Termine heute.</span>}</div><div className="neka-metric-foot"><span>{data.dueTodos.length} Aufgaben fällig</span><span>Kalender <span className="desktop-arrow" aria-hidden="true">↗</span></span></div></Link>
       </div>
-    </>
-  );
+    </div>
+    <nav className="neka-quick" aria-label="Schnell erfassen"><span>Schnell erfassen</span><Link href="/erik/todos">+ Aufgabe</Link><Link href="/termine">+ Termin</Link><Link href="/finanzielles/neu">+ Buchung</Link><Link href="/erik/ernaehrung">+ Mahlzeit</Link></nav>
+    <div className="neka-bottom-grid">
+      <section className="neka-panel"><div className="neka-section-title"><h2>Dein Tagesplan</h2><Link href="/termine" aria-label="Termin hinzufügen">+</Link></div><div className="neka-timeline">{data.todayEvents.length ? data.todayEvents.map(event => <Link href="/termine" key={event.id} className="neka-event"><i style={{background:event.color ?? "#a6bf9d"}}/><div><strong>{event.title}</strong><span>{localDateKey(new Date(event.starts_at)) < data.todayStr ? "Seit früher" : time(event.starts_at)}{event.ends_at ? ` – ${time(event.ends_at)}` : ""}</span></div><small>{event.category ?? "Termin"}</small></Link>) : <p className="neka-empty">Keine Termine heute.<br/><Link href="/termine">Termin hinzufügen <span className="desktop-arrow" aria-hidden="true">↗</span></Link></p>}</div><div className="neka-section-title neka-subheading"><h2>Aufgaben</h2><Link href="/erik/todos">Alle <span className="desktop-arrow" aria-hidden="true">↗</span></Link></div>{focusTodos.length ? focusTodos.slice(0,5).map(todo => <div className="neka-check-row" key={todo.id}><OptimisticToggle action={toggleTodo} values={{ id: todo.id, area: todo.area }} checked={false} field="done" label={todo.title}/><span>{todo.title}</span>{todo.due_date && <small>{todo.due_date < data.todayStr ? "überfällig" : "heute"}</small>}</div>) : <p className="neka-empty">Keine fälligen oder markierten Aufgaben.</p>}</section>
+      <section className="neka-panel"><div className="neka-section-title"><h2>Routinen</h2><Link href="/erik/habits">Routinen <span className="desktop-arrow" aria-hidden="true">↗</span></Link></div>{data.habits.length ? data.habits.map(({habit,doneToday}) => <div className="neka-check-row" key={habit.id}><OptimisticToggle action={toggleHabitLog} values={{ habit_id: habit.id, log_date: data.todayStr }} checked={doneToday} field="checked" label={habit.name + " · " + data.todayStr}/><span>{habit.name}</span><small>{doneToday ? "Erledigt" : "Heute"}</small></div>) : <p className="neka-empty"><Link href="/erik/habits">Routine hinzufügen <span className="desktop-arrow" aria-hidden="true">↗</span></Link></p>}<div className="neka-section-title neka-subheading"><h2>Deine Woche</h2><Link href="/erik/goals">Ziele <span className="desktop-arrow" aria-hidden="true">↗</span></Link></div>{openGoals.length ? openGoals.slice(0,3).map(goal => <div className="neka-check-row" key={goal.id}><OptimisticToggle action={toggleGoal} values={{ id: goal.id }} checked={false} field="done" label={goal.title}/><span>{goal.title}</span></div>) : <p className="neka-empty">Keine offenen Wochenziele.</p>}</section>
+      <section className="neka-panel"><div className="neka-section-title"><h2>Letzte Aktivität</h2><span className="neka-live-dot"/></div><ActivityFeed items={activity}/></section>
+    </div>
+  </div>;
 }

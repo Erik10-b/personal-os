@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 
@@ -13,13 +13,22 @@ export const metadata: Metadata = {
   description: "Privater Organizer für Finanzielles, Erik, Termine, Arbeit/Master und Fußball",
 };
 
+// viewport-fit=cover, damit env(safe-area-inset-*) auf dem iPhone greift (Bottom-Bar über dem Home-Indicator).
+export const viewport: Viewport = {
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8f9f7" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0d12" },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="de" data-theme="dark" className={outfit.variable} suppressHydrationWarning>
+    <html lang="de" data-theme="light" className={outfit.variable} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{

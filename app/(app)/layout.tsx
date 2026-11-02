@@ -1,20 +1,21 @@
-import { createClient } from "@/lib/supabase/server";
-import { HeaderNav } from "@/components/nav/HeaderNav";
+
+import { PageTransition } from "@/components/nav/PageTransition";
+import { SideNav } from "@/components/nav/SideNav";
 import { BottomTabBar } from "@/components/nav/BottomTabBar";
 
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  const email = data.user?.email ?? "";
-  const initials = email.slice(0, 2).toUpperCase() || "??";
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+
+
+
+
 
   return (
-    <>
-      <HeaderNav userInitials={initials} />
+    <div className="os-frame">
+      <SideNav />
       <div className="shell">
-        <main>{children}</main>
+        <main><PageTransition>{children}</PageTransition></main>
       </div>
       <BottomTabBar />
-    </>
+    </div>
   );
 }

@@ -15,7 +15,7 @@ export default async function FussballPage() {
       />
       <div style={{ marginTop: "var(--space-8)" }}>
         <Link href="/fussball/statistik" className="btn secondary">
-          Zur Statistik →
+          Zur Statistik <span className="desktop-arrow" aria-hidden="true">→</span>
         </Link>
       </div>
     </>

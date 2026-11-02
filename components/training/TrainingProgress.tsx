@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { WorkoutSessionWithExercises } from "@/lib/services/training";
 import { bestSet, exerciseVolume, formatWeight } from "@/lib/trainingUtils";
+import { bestOneRepMax } from "@/lib/trainingCoach";
 
 export function TrainingProgress({ sessions }: { sessions: WorkoutSessionWithExercises[] }) {
   const sorted = useMemo(
@@ -18,6 +19,7 @@ export function TrainingProgress({ sessions }: { sessions: WorkoutSessionWithExe
   }, [sorted]);
 
   const [selected, setSelected] = useState(exerciseNames[0] ?? "");
+  const [metric, setMetric] = useState<"weight" | "e1rm">("weight");
   const activeExercise = exerciseNames.includes(selected) ? selected : exerciseNames[0] ?? "";
 
   const weightData = useMemo(() => {
@@ -26,10 +28,11 @@ export function TrainingProgress({ sessions }: { sessions: WorkoutSessionWithExe
         .filter((ex) => ex.name === activeExercise)
         .map((ex) => ({
           date: new Date(s.session_date + "T00:00:00").toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }),
-          weight: bestSet(ex).weight_kg,
+          weight: metric === "e1rm" ? Math.round((bestOneRepMax(ex) ?? 0) * 10) / 10 : bestSet(ex).weight_kg,
         }))
+        .filter((point) => point.weight > 0 || metric === "weight")
     );
-  }, [sorted, activeExercise]);
+  }, [sorted, activeExercise, metric]);
 
   const volumeData = useMemo(() => {
     return sorted.map((s) => ({
@@ -43,7 +46,13 @@ export function TrainingProgress({ sessions }: { sessions: WorkoutSessionWithExe
   return (
     <div className="card" style={{ marginBottom: "var(--space-6)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "var(--space-2)", marginBottom: "var(--space-2)" }}>
-        <span className="habit-section-label" style={{ marginBottom: 0 }}>VERLAUF — GEWICHT PRO ÜBUNG</span>
+        <span className="habit-section-label" style={{ marginBottom: 0 }}>
+          VERLAUF — {metric === "e1rm" ? "GESCHÄTZTES 1RM" : "GEWICHT"} PRO ÜBUNG
+        </span>
+        <div className="progress-metric" role="radiogroup" aria-label="Kennzahl">
+          <button type="button" role="radio" aria-checked={metric === "weight"} className={metric === "weight" ? "active" : ""} onClick={() => setMetric("weight")}>Gewicht</button>
+          <button type="button" role="radio" aria-checked={metric === "e1rm"} className={metric === "e1rm" ? "active" : ""} onClick={() => setMetric("e1rm")} title="Geschätztes Maximalgewicht für 1 Wiederholung (Epley)">1RM</button>
+        </div>
         <select
           className="input mono"
           value={activeExercise}

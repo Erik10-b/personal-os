@@ -1,3 +1,5 @@
+import { SubmitButton } from "@/components/ui/SubmitButton";
+import { OptimisticToggle } from "@/components/ui/OptimisticToggle";
 import { GoalRow, GoalScope } from "@/lib/types";
 import { createGoal, deleteGoal, toggleGoal } from "@/lib/actions/goals";
 import { EmptyState } from "@/components/ui/Card";
@@ -20,9 +22,9 @@ export function GoalSection({
       <form action={createGoal} style={{ display: "flex", gap: "var(--space-2)", marginBottom: "var(--space-4)" }}>
         <input type="hidden" name="scope" value={scope} />
         <input className="input" name="title" placeholder="Neues Ziel…" required style={{ flex: 1 }} />
-        <button type="submit" className="btn primary">
+        <SubmitButton type="submit" className="btn primary">
           +
-        </button>
+        </SubmitButton>
       </form>
 
       {goals.length === 0 ? (
@@ -40,11 +42,7 @@ export function GoalSection({
                 opacity: goal.done ? 0.55 : 1,
               }}
             >
-              <form action={toggleGoal}>
-                <input type="hidden" name="id" value={goal.id} />
-                <input type="hidden" name="done" value={String(goal.done)} />
-                <button type="submit" className={`checkbox ${goal.done ? "checked" : ""}`} aria-label="erledigt" />
-              </form>
+              <OptimisticToggle action={toggleGoal} values={{ id: goal.id }} checked={goal.done} field="done" label={goal.title}/>
 
               <span
                 style={{

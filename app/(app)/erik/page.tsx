@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { localDateKey } from "@/lib/dateUtils";
 import { getHabitsWithLogs } from "@/lib/services/habits";
 import { getWeightLogs } from "@/lib/services/weight";
@@ -28,7 +29,7 @@ function SectionHead({ title, linkHref, linkLabel }: { title: string; linkHref?:
       <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{title}</h2>
       {linkHref && (
         <Link href={linkHref} className="btn ghost sm">
-          {linkLabel ?? "Details →"}
+          {linkLabel?.replace(/\s*→$/, "") ?? "Details"}<span className="desktop-arrow" aria-hidden="true"> →</span>
         </Link>
       )}
     </div>
@@ -63,9 +64,9 @@ export default async function ErikPage() {
       <SectionHead title="Habits" linkHref="/erik/habits" linkLabel="Analytics-Dashboard →" />
       <form action={createHabit} style={{ display: "flex", gap: "var(--space-2)", marginBottom: "var(--space-6)" }}>
         <input className="input" name="name" placeholder="Neue Habit, z.B. Lesen" required style={{ flex: 1 }} />
-        <button type="submit" className="btn primary">
+        <SubmitButton type="submit" className="btn primary">
           Anlegen
-        </button>
+        </SubmitButton>
       </form>
       {habits.length === 0 ? (
         <EmptyState>Noch keine Habits angelegt.</EmptyState>
@@ -97,9 +98,9 @@ export default async function ErikPage() {
           <label htmlFor="weight_kg">Gewicht (kg)</label>
           <input className="input mono" id="weight_kg" name="weight_kg" type="number" step="0.1" min="1" required />
         </div>
-        <button type="submit" className="btn primary">
+        <SubmitButton type="submit" className="btn primary">
           Eintragen
-        </button>
+        </SubmitButton>
       </form>
       <WeightLineChart logs={weightLogs} />
 
@@ -160,9 +161,9 @@ export default async function ErikPage() {
           <label htmlFor="meal-fat">F (g)</label>
           <input className="input mono" id="meal-fat" name="fat_g" type="number" min="0" />
         </div>
-        <button type="submit" className="btn primary">
+        <SubmitButton type="submit" className="btn primary">
           Hinzufügen
-        </button>
+        </SubmitButton>
       </form>
 
       {todayMeals.length === 0 ? (

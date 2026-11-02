@@ -2,6 +2,8 @@ import { getMatches, summarizeMatches } from "@/lib/services/matches";
 import { deleteMatch } from "@/lib/actions/matches";
 import { MatchForm } from "@/components/matches/MatchForm";
 import { EmptyState } from "@/components/ui/Card";
+import { ShareCardButton } from "@/components/share/ShareCardButton";
+import { matchShareCard } from "@/lib/shareCardData";
 
 export default async function FussballStatistikPage() {
   const matches = await getMatches();
@@ -67,8 +69,9 @@ export default async function FussballStatistikPage() {
                 </td>
                 <td className="mono">{m.own_goals}</td>
                 <td>{m.note}</td>
-                <td className="right">
-                  <form action={deleteMatch}>
+                <td className="right" style={{ whiteSpace: "nowrap" }}>
+                  <ShareCardButton data={matchShareCard(m, summary)} />
+                  <form action={deleteMatch} style={{ display: "inline-flex" }}>
                     <input type="hidden" name="id" value={m.id} />
                     <button type="submit" className="btn ghost sm">
                       Löschen

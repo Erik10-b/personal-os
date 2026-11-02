@@ -98,13 +98,13 @@ export function CalendarView({
     <>
       <div className="cal-toolbar">
         <div className="cal-nav">
-          <button className="cal-nav-btn" onClick={() => shiftMonth(-1)} aria-label="Vorheriger Monat">
+          <button className="cal-nav-btn" onClick={() => shiftMonth(-1)} aria-label="Vorheriger Monat"><span className="mobile-nav-label">Zurück</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
           <span className="cal-month-label">{monthLabel}</span>
-          <button className="cal-nav-btn" onClick={() => shiftMonth(1)} aria-label="Nächster Monat">
+          <button className="cal-nav-btn" onClick={() => shiftMonth(1)} aria-label="Nächster Monat"><span className="mobile-nav-label">Weiter</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 18l6-6-6-6" />
             </svg>

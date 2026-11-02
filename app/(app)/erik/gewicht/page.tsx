@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { localDateKey } from "@/lib/dateUtils";
 import { getWeightLogs } from "@/lib/services/weight";
 import { logWeight } from "@/lib/actions/weight";
@@ -40,9 +41,9 @@ export default async function GewichtPage() {
           <label htmlFor="weight_kg">Gewicht (kg)</label>
           <input className="input mono" id="weight_kg" name="weight_kg" type="number" step="0.1" min="1" required />
         </div>
-        <button type="submit" className="btn primary">
+        <SubmitButton type="submit" className="btn primary">
           Eintragen
-        </button>
+        </SubmitButton>
       </form>
 
       <WeightLineChart logs={logs} />

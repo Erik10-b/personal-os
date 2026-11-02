@@ -1,69 +1,28 @@
-import { signIn } from "@/lib/actions/auth";
+import Image from "next/image";
+import { LoginForm } from "@/components/auth/LoginForm";
+import { ThemeToggle } from "@/components/nav/ThemeToggle";
 
-export default async function LoginPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string }>;
-}) {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const { error } = await searchParams;
-
-  return (
-    <div className="login-shell">
-      <div
-        className="login-image"
-        style={{ "--login-img": "url(/login.jpg)" } as React.CSSProperties}
-      />
-      <div className="login-form-side">
-      <div className="card" style={{ width: "100%", maxWidth: 380 }}>
-        <div style={{ marginBottom: "var(--space-6)" }}>
-          <div
-            className="brand-mark"
-            style={{ width: 44, height: 44, fontSize: 18, marginBottom: "var(--space-4)" }}
-          >
-            P
-          </div>
-          <h1 style={{ fontSize: 20, fontWeight: 800, marginBottom: 4 }}>Personal OS</h1>
-          <p style={{ fontSize: 12.5, color: "var(--text-secondary)" }}>
-            Privater Organizer · Anmeldung
-          </p>
+  return <div className="auth-shell">
+    <header className="auth-header"><div className="auth-brand"><span aria-hidden="true">✳</span> Personal OS</div><ThemeToggle/></header>
+    <main className="auth-main">
+      <section className="auth-scene" aria-label="Personal OS Sportmotiv">
+        <div className="auth-scene-top"><span>PERSONAL OS</span><span>01 / PRIVAT</span></div>
+        <div className="auth-orbit auth-orbit-one" aria-hidden="true"/><div className="auth-orbit auth-orbit-two" aria-hidden="true"/>
+        <div className="auth-sport"><Image src="/sport-editorial.png" alt="Fußballspieler im Seitenprofil mit einem Ball" fill sizes="(max-width: 760px) 100vw, 50vw" priority/></div>
+        <div className="auth-scene-bottom"><span>Finanzen</span><span>Planung</span><span>Training</span></div>
+      </section>
+      <section className="auth-form-side" aria-labelledby="login-heading">
+        <div className="auth-form-content">
+          <div className="auth-kicker"><span/> PRIVATER ZUGANG</div>
+          <h1 id="login-heading">Anmelden<span>.</span></h1>
+          <p className="auth-description">Mit deinem Personal-OS-Konto fortfahren.</p>
+          <LoginForm error={error}/>
+          <div className="auth-account-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span>Nur für dein bestehendes Konto.</span></div>
         </div>
-
-        <form action={signIn} className="form-grid">
-          <div className="form-row">
-            <label htmlFor="email">E-Mail</label>
-            <input
-              className="input"
-              id="email"
-              name="email"
-              type="email"
-              required
-              autoComplete="username"
-              placeholder="du@beispiel.de"
-            />
-          </div>
-          <div className="form-row">
-            <label htmlFor="password">Passwort</label>
-            <input
-              className="input"
-              id="password"
-              name="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              placeholder="••••••••"
-            />
-          </div>
-          {error && (
-            <div className="form-row">
-              <div className="err">{error}</div>
-            </div>
-          )}
-          <button type="submit" className="btn primary block">
-            Anmelden
-          </button>
-        </form>
-      </div>
-      </div>
-    </div>
-  );
+        <footer className="auth-footer"><span>Personal OS</span><span>Erik Wolters</span></footer>
+      </section>
+    </main>
+  </div>;
 }

@@ -1,4 +1,6 @@
 "use client";
+import { SubmitButton } from "@/components/ui/SubmitButton";
+import { OptimisticToggle } from "@/components/ui/OptimisticToggle";
 
 import { TodoArea, TodoRow } from "@/lib/types";
 import { createTodo, deleteTodo, setTodoPriority, setTodoUrgency, toggleTodo } from "@/lib/actions/todos";
@@ -54,9 +56,9 @@ export function KanbanBoard({ area, todos }: { area: TodoArea; todos: TodoRow[] 
           <input type="checkbox" name="key" />
           Schlüsselaufgabe
         </label>
-        <button type="submit" className="btn primary">
+        <SubmitButton type="submit" className="btn primary">
           Anlegen
-        </button>
+        </SubmitButton>
       </form>
 
       <div
@@ -84,12 +86,7 @@ export function KanbanBoard({ area, todos }: { area: TodoArea; todos: TodoRow[] 
                     style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", padding: "var(--space-2) 0" }}
                   >
                     <div style={{ display: "flex", alignItems: "flex-start", gap: "var(--space-2)" }}>
-                      <form action={toggleTodo}>
-                        <input type="hidden" name="id" value={todo.id} />
-                        <input type="hidden" name="area" value={area} />
-                        <input type="hidden" name="done" value={String(todo.done)} />
-                        <button type="submit" className="checkbox" aria-label="erledigt" />
-                      </form>
+                      <OptimisticToggle action={toggleTodo} values={{ id: todo.id, area: area }} checked={todo.done} field="done" label={todo.title}/>
                       <span style={{ flex: 1, fontSize: 13 }}>
                         {todo.key && <span title="Schlüsselaufgabe">⭐ </span>}
                         {todo.title}
@@ -167,12 +164,7 @@ export function KanbanBoard({ area, todos }: { area: TodoArea; todos: TodoRow[] 
                 key={todo.id}
                 style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", padding: "var(--space-2) 0", opacity: 0.55 }}
               >
-                <form action={toggleTodo}>
-                  <input type="hidden" name="id" value={todo.id} />
-                  <input type="hidden" name="area" value={area} />
-                  <input type="hidden" name="done" value={String(todo.done)} />
-                  <button type="submit" className="checkbox checked" aria-label="erledigt" />
-                </form>
+                <OptimisticToggle action={toggleTodo} values={{ id: todo.id, area: area }} checked={todo.done} field="done" label={todo.title}/>
                 <span style={{ flex: 1, fontSize: 13, textDecoration: "line-through" }}>{todo.title}</span>
                 <form action={deleteTodo}>
                   <input type="hidden" name="id" value={todo.id} />

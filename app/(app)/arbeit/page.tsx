@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import Link from "next/link";
 import { getNotes } from "@/lib/services/notes";
 import { getTodos } from "@/lib/services/todos";
@@ -30,9 +31,9 @@ export default async function ArbeitPage() {
           </h3>
           <form action={createNote} style={{ display: "flex", gap: "var(--space-2)", marginBottom: "var(--space-4)" }}>
             <input className="input" name="title" placeholder="Neue Notiz…" required style={{ flex: 1 }} />
-            <button type="submit" className="btn primary">
+            <SubmitButton type="submit" className="btn primary">
               +
-            </button>
+            </SubmitButton>
           </form>
 
           {notes.length === 0 ? (

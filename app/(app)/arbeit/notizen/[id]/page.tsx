@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getNote } from "@/lib/services/notes";
@@ -16,7 +17,7 @@ export default async function NotizDetailPage({
     <>
       <div className="page-head">
         <Link href="/arbeit" className="btn ghost sm" style={{ marginBottom: "var(--space-3)" }}>
-          ← Zurück
+          <span className="desktop-arrow" aria-hidden="true">←</span> Zurück
         </Link>
       </div>
 
@@ -37,9 +38,9 @@ export default async function NotizDetailPage({
           />
         </div>
         <div style={{ display: "flex", gap: "var(--space-3)" }}>
-          <button type="submit" className="btn primary">
+          <SubmitButton type="submit" className="btn primary">
             Speichern
-          </button>
+          </SubmitButton>
         </div>
       </form>
 

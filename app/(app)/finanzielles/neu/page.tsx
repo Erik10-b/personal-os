@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import { createTransaction } from "@/lib/actions/transactions";
 import { localDateKey } from "@/lib/dateUtils";
 
@@ -46,9 +47,9 @@ export default function NeueTransaktionPage() {
           <textarea className="textarea" id="note" name="note" />
         </div>
 
-        <button type="submit" className="btn primary block">
+        <SubmitButton type="submit" className="btn primary block">
           Buchen
-        </button>
+        </SubmitButton>
       </form>
     </>
   );

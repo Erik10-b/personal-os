@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import Link from "next/link";
 import { getMealsForDate, sumMacros } from "@/lib/services/meals";
 import { createMeal, deleteMeal } from "@/lib/actions/meals";
@@ -34,11 +35,11 @@ export default async function ErnaehrungPage({
 
       <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", marginBottom: "var(--space-4)" }}>
         <Link href={`/erik/ernaehrung?date=${shiftDate(activeDate, -1)}`} className="btn ghost sm">
-          ← Vortag
+          <span className="desktop-arrow" aria-hidden="true">←</span> Vortag
         </Link>
         <span className="badge mono">{new Date(activeDate + "T00:00:00").toLocaleDateString("de-DE")}</span>
         <Link href={`/erik/ernaehrung?date=${shiftDate(activeDate, 1)}`} className="btn ghost sm">
-          Folgetag →
+          Folgetag <span className="desktop-arrow" aria-hidden="true">→</span>
         </Link>
         {activeDate !== today && (
           <Link href="/erik/ernaehrung" className="btn ghost sm">
@@ -92,9 +93,9 @@ export default async function ErnaehrungPage({
           <label htmlFor="fat_g">F (g)</label>
           <input className="input mono" id="fat_g" name="fat_g" type="number" min="0" />
         </div>
-        <button type="submit" className="btn primary">
+        <SubmitButton type="submit" className="btn primary">
           Hinzufügen
-        </button>
+        </SubmitButton>
       </form>
 
       {meals.length === 0 ? (

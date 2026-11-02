@@ -1,4 +1,5 @@
 "use client";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 import { Modal } from "@/components/ui/Modal";
 import { EventArea, EventRow } from "@/lib/types";
@@ -182,9 +183,9 @@ export function EventForm({
           <textarea className="textarea" id="note" name="note" defaultValue={event?.note ?? ""} placeholder="optional" />
         </div>
 
-        <button type="submit" className="btn primary block" style={{ minHeight: 46 }}>
+        <SubmitButton type="submit" className="btn primary block" style={{ minHeight: 46 }}>
           {isEdit ? "Speichern" : "Termin anlegen"}
-        </button>
+        </SubmitButton>
       </form>
     </Modal>
   );
