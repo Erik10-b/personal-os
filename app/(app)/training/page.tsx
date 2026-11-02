@@ -5,21 +5,20 @@ import { collectExerciseNames, getPersonalBests, getWorkoutSessions } from "@/li
 import type { WorkoutSessionWithExercises } from "@/lib/services/training";
 import { getTemplates } from "@/lib/services/trainingTemplates";
 import type { WorkoutTemplateWithExercises } from "@/lib/services/trainingTemplates";
-import { addExercise, completeSession, deleteSession, reopenSession, startSession } from "@/lib/actions/training";
+import { deleteSession, reopenSession, startSession } from "@/lib/actions/training";
 import { addTemplateExercise, createTemplate, deleteTemplate } from "@/lib/actions/trainingTemplates";
 import { EmptyState } from "@/components/ui/Card";
 import { TrainingProgress } from "@/components/training/TrainingProgress";
-import { SessionExerciseCard } from "@/components/training/SessionExerciseCard";
-import { SessionNote } from "@/components/training/SessionNote";
+import { ActiveWorkout } from "@/components/training/ActiveWorkout";
 import { TemplateExerciseList } from "@/components/training/TemplateExerciseList";
-import { formatSetsSummary, formatWeight, lastPerformanceByName } from "@/lib/trainingUtils";
+import { formatSetsSummary, formatWeight } from "@/lib/trainingUtils";
 import type { PersonalBest } from "@/lib/services/training";
 import { formatDelta, formatVolume, sessionInsights } from "@/lib/trainingInsights";
 import type { SessionInsights } from "@/lib/trainingInsights";
 import { sessionShareCard } from "@/lib/shareCardData";
 import { ShareCardButton } from "@/components/share/ShareCardButton";
-import { RestTimer } from "@/components/training/RestTimer";
-import { bestOneRepMax, lastSetsByName, recentWeeks, relativeDay, suggestNext, weekStreak } from "@/lib/trainingCoach";
+import { TrainingOverview } from "@/components/training/TrainingOverview";
+import { bestOneRepMax, lastSetsByName, recentWeeks, relativeDay, weekStreak } from "@/lib/trainingCoach";
 
 type Tab = "log" | "verlauf" | "fortschritt" | "vorlagen";
 
@@ -117,7 +116,7 @@ export default async function TrainingPage({
       )}
       {tab === "verlauf" && <VerlaufTab doneSessions={doneSessions} insightsById={insightsById} />}
       {tab === "fortschritt" && (
-        <FortschrittTab doneSessions={doneSessions} bests={getPersonalBests(sessions)} />
+        <FortschrittTab doneSessions={doneSessions} bests={getPersonalBests(doneSessions)} />
       )}
       {tab === "vorlagen" && <VorlagenTab templates={templates} />}
     </div>
@@ -245,6 +244,7 @@ function Overview({
         <details className="tr-free">
           <summary>Freies Training oder anderes Datum</summary>
           <form action={startSession} className="tr-free-form">
+            <div className="form-row"><label htmlFor="session-title">Name des Trainings</label><input className="input" id="session-title" name="title" placeholder="z.B. Brust und Rücken" maxLength={120} /></div>
             <div className="form-row" style={{ flex: 1, minWidth: 160 }}>
               <label htmlFor="template_id">Vorlage</label>
               <select className="input" id="template_id" name="template_id" defaultValue="">
@@ -290,69 +290,15 @@ function ActiveSessions({
 }) {
   const templateNames = templates.flatMap((t) => t.exercises.map((e) => e.name));
   const exerciseNames = collectExerciseNames(sessions, templateNames);
-  const lastByName = lastPerformanceByName(doneSessions);
   const lastSets = lastSetsByName(doneSessions);
 
-  return (
-    <>
-      {openSessions.map((session) => (
-        <section key={session.id} className="tr-live" aria-label={`Laufende Session ${session.title || "Training"}`}>
-          <div className="tr-live-head">
-            <div>
-              <span className="tr-live-kicker"><i className="tr-live-dot" aria-hidden="true" />Läuft · {formatDate(session.session_date)}</span>
-              <h2>{session.title || "Training"}</h2>
-              <p>{session.exercises.length} Übungen · {session.exercises.reduce((n, ex) => n + ex.sets_list.length, 0)} Sätze</p>
-            </div>
-            <form action={deleteSession}>
-              <input type="hidden" name="id" value={session.id} />
-              <button type="submit" className="btn ghost sm">Verwerfen</button>
-            </form>
-          </div>
+  return <>{openSessions.map(session => <ActiveWorkout
+    key={session.id}
+    session={session}
+    previous={Object.fromEntries(lastSets)}
+    exerciseNames={exerciseNames}
+  />)}</>;
 
-          {session.exercises.length === 0 ? (
-            <EmptyState>Noch keine Übungen — füge unten welche hinzu.</EmptyState>
-          ) : (
-            session.exercises.map((ex) => (
-              <SessionExerciseCard
-                key={ex.id}
-                exercise={ex}
-                prevSummary={lastByName.get(ex.name)}
-                prevSets={lastSets.get(ex.name)}
-                suggestion={suggestNext(lastSets.get(ex.name))}
-              />
-            ))
-          )}
-
-          <form action={addExercise} className="tr-add-exercise">
-            <input type="hidden" name="session_id" value={session.id} />
-            <div className="form-row" style={{ flex: 1, minWidth: 160 }}>
-              <label htmlFor={`add-${session.id}`}>Übung hinzufügen</label>
-              <input className="input" id={`add-${session.id}`} name="name" placeholder="Übung wählen/eingeben" list="exercise-names" required />
-            </div>
-            <button type="submit" className="btn secondary sm">+ Übung</button>
-          </form>
-
-          <SessionNote sessionId={session.id} note={session.note} />
-
-          {session.id === openSessions[0].id && <RestTimer />}
-          <div className="session-actionbar">
-            <form action={completeSession} style={{ flex: 1, display: "flex" }}>
-              <input type="hidden" name="id" value={session.id} />
-              <SubmitButton type="submit" className="btn primary" style={{ flex: 1, minHeight: 46 }}>
-                ✓ Training abschließen
-              </SubmitButton>
-            </form>
-          </div>
-        </section>
-      ))}
-
-      <datalist id="exercise-names">
-        {exerciseNames.map((name) => (
-          <option key={name} value={name} />
-        ))}
-      </datalist>
-    </>
-  );
 }
 
 /* ===================== Session-Karte (Übersicht + Verlauf) ===================== */
@@ -377,6 +323,7 @@ function SessionCard({ session, insights, today }: { session: WorkoutSessionWith
         </div>
       </div>
       {session.note && <p className="tr-session-note">{session.note}</p>}
+      {session.effort_score != null && <p className="tr-session-note">Gefühlte Anstrengung: {session.effort_score}/10</p>}
 
       {session.exercises.length > 0 && (
         <>
@@ -471,6 +418,8 @@ function FortschrittTab({
 
   return (
     <>
+      <p className="neka-empty">Auswertung der zuletzt geladenen Trainings (maximal 150). Nur abgeschlossene Einheiten zählen.</p>
+      <TrainingOverview sessions={doneSessions} today={localDateKey()} />
       <TrainingProgress sessions={doneSessions} />
       <div className="card">
         <span className="habit-section-label">BESTLEISTUNGEN</span>

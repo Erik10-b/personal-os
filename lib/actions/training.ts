@@ -115,6 +115,8 @@ export async function updateSessionNote(formData: FormData) {
 
 /** Fügt der Session eine Übung mit 2 Startsätzen hinzu. */
 export async function addExercise(formData: FormData) {
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name || name.length > 120) throw new Error("Bitte einen Übungsnamen mit maximal 120 Zeichen eingeben.");
   const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) throw new Error("Nicht angemeldet");
@@ -125,7 +127,7 @@ export async function addExercise(formData: FormData) {
     .insert({
       session_id: String(formData.get("session_id")),
       user_id: userId,
-      name: String(formData.get("name")),
+      name,
       sets: DEFAULT_SET_COUNT,
       reps: 8,
       weight_kg: 0,

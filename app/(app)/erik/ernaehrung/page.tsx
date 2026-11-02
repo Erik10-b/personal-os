@@ -1,3 +1,6 @@
+import { NutritionTargets } from "@/components/training/NutritionTargets";
+import { readNutritionGoals } from "@/lib/nutritionGoals";
+import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import Link from "next/link";
 import { getMealsForDate, sumMacros } from "@/lib/services/meals";
@@ -23,6 +26,10 @@ export default async function ErnaehrungPage({
 
   const meals = await getMealsForDate(activeDate);
   const totals = sumMacros(meals);
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const configured = !!user?.user_metadata?.nutrition_goals;
+  const goals = readNutritionGoals(user?.user_metadata?.nutrition_goals);
 
   return (
     <>
@@ -48,24 +55,7 @@ export default async function ErnaehrungPage({
         )}
       </div>
 
-      <div className="kpi-grid" style={{ marginBottom: "var(--space-6)" }}>
-        <div className="kpi-card">
-          <div className="kpi-label">Kalorien</div>
-          <div className="kpi-value club">{totals.kcal}<span className="unit">kcal</span></div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-label">Protein</div>
-          <div className="kpi-value">{totals.protein_g}<span className="unit">g</span></div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-label">Kohlenhydrate</div>
-          <div className="kpi-value">{totals.carbs_g}<span className="unit">g</span></div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-label">Fett</div>
-          <div className="kpi-value">{totals.fat_g}<span className="unit">g</span></div>
-        </div>
-      </div>
+      <NutritionTargets totals={totals} goals={goals} configured={configured} />
 
       <form
         action={createMeal}

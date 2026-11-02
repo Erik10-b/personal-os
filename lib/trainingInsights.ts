@@ -44,7 +44,7 @@ export function sessionInsights(
   let durationMin: number | null = null;
   if (session.completed_at) {
     const minutes = (Date.parse(session.completed_at) - Date.parse(session.created_at)) / 60000;
-    if (minutes >= 10 && minutes <= 240) durationMin = Math.round(minutes);
+    if (minutes >= 0 && minutes <= 240) durationMin = Math.round(minutes);
   }
 
   const top = [...session.exercises]
