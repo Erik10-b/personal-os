@@ -1431,3 +1431,37 @@ body:has(.auth-shell) { padding-bottom:0; }
   .tr-free-form .btn, .tr-add-exercise .btn { flex:1; min-height:44px; }
 }
 @media(prefers-reduced-motion:reduce) { .tr-live-dot { animation:none; } .tr-start { transition:none; } }
+
+/* Fitness: exercise library and computed training insights. */
+.exercise-picker summary { cursor: pointer; font-weight: 650; }
+.exercise-picker form { display: grid; gap: 14px; margin-top: 18px; }
+.fitness-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.fitness-chips [aria-pressed="true"] { outline: 2px solid var(--club); }
+.exercise-results { display: grid; max-height: 260px; overflow-y: auto; gap: 4px; }
+.exercise-results button { display: flex; justify-content: space-between; text-align: left; white-space: normal; }
+.exercise-results small { color: var(--text-secondary); margin-left: 12px; }
+.fitness-overview { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+.fitness-overview h2, .fitness-targets h2 { font-size: 16px; margin-bottom: 8px; }
+.fitness-overview p, .fitness-overview small { font-size: 12px; color: var(--text-secondary); }
+.fitness-year { grid-column: 1 / -1; }
+.fitness-heatmap { display: grid; grid-template-columns: repeat(31, minmax(0, 1fr)); gap: 4px; margin-top: 16px; }
+.fitness-heatmap span { aspect-ratio: 1; border-radius: 3px; background: var(--border-subtle); }
+.fitness-heatmap [data-level="1"] { background: color-mix(in srgb, var(--club) 45%, var(--bg-surface-2)); }
+.fitness-heatmap [data-level="2"] { background: color-mix(in srgb, var(--club) 70%, var(--bg-surface-2)); }
+.fitness-heatmap [data-level="3"] { background: var(--club); }
+.fitness-muscle { display: grid; grid-template-columns: 75px 1fr 70px; gap: 10px; align-items: center; margin: 10px 0; font-size: 12px; }
+.fitness-muscle meter { width: 100%; accent-color: var(--club); }
+.fitness-bars { height: 160px; display: flex; gap: 8px; align-items: flex-end; margin-bottom: 16px; }
+.fitness-bars > div { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; }
+.fitness-bars > div > span { width: 100%; background: var(--club); border-radius: 5px 5px 0 0; }
+.fitness-bars small { font-size: 10px; }
+.fitness-targets { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+.fitness-targets progress { display: block; width: 100%; margin: 14px 0 8px; accent-color: var(--club); }
+.fitness-targets small { color: var(--text-secondary); }
+.fitness-goals-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.fitness-goals-form label { display: grid; gap: 6px; flex: 1 1 130px; }
+@media (max-width: 640px) {
+  .fitness-overview { grid-template-columns: minmax(0, 1fr); }
+  .fitness-targets { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fitness-heatmap { gap: 3px; }
+}

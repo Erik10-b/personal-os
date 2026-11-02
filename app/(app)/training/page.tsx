@@ -5,7 +5,7 @@ import { collectExerciseNames, getPersonalBests, getWorkoutSessions } from "@/li
 import type { WorkoutSessionWithExercises } from "@/lib/services/training";
 import { getTemplates } from "@/lib/services/trainingTemplates";
 import type { WorkoutTemplateWithExercises } from "@/lib/services/trainingTemplates";
-import { addExercise, completeSession, deleteSession, reopenSession, startSession } from "@/lib/actions/training";
+import { completeSession, deleteSession, reopenSession, startSession } from "@/lib/actions/training";
 import { addTemplateExercise, createTemplate, deleteTemplate } from "@/lib/actions/trainingTemplates";
 import { EmptyState } from "@/components/ui/Card";
 import { TrainingProgress } from "@/components/training/TrainingProgress";
@@ -18,6 +18,8 @@ import { formatDelta, formatVolume, sessionInsights } from "@/lib/trainingInsigh
 import type { SessionInsights } from "@/lib/trainingInsights";
 import { sessionShareCard } from "@/lib/shareCardData";
 import { ShareCardButton } from "@/components/share/ShareCardButton";
+import { ExercisePicker } from "@/components/training/ExercisePicker";
+import { TrainingOverview } from "@/components/training/TrainingOverview";
 import { RestTimer } from "@/components/training/RestTimer";
 import { bestOneRepMax, lastSetsByName, recentWeeks, relativeDay, suggestNext, weekStreak } from "@/lib/trainingCoach";
 
@@ -117,7 +119,7 @@ export default async function TrainingPage({
       )}
       {tab === "verlauf" && <VerlaufTab doneSessions={doneSessions} insightsById={insightsById} />}
       {tab === "fortschritt" && (
-        <FortschrittTab doneSessions={doneSessions} bests={getPersonalBests(sessions)} />
+        <FortschrittTab doneSessions={doneSessions} bests={getPersonalBests(doneSessions)} />
       )}
       {tab === "vorlagen" && <VorlagenTab templates={templates} />}
     </div>
@@ -245,6 +247,7 @@ function Overview({
         <details className="tr-free">
           <summary>Freies Training oder anderes Datum</summary>
           <form action={startSession} className="tr-free-form">
+            <div className="form-row"><label htmlFor="session-title">Name des Trainings</label><input className="input" id="session-title" name="title" placeholder="z.B. Brust und Rücken" maxLength={120} /></div>
             <div className="form-row" style={{ flex: 1, minWidth: 160 }}>
               <label htmlFor="template_id">Vorlage</label>
               <select className="input" id="template_id" name="template_id" defaultValue="">
@@ -323,14 +326,7 @@ function ActiveSessions({
             ))
           )}
 
-          <form action={addExercise} className="tr-add-exercise">
-            <input type="hidden" name="session_id" value={session.id} />
-            <div className="form-row" style={{ flex: 1, minWidth: 160 }}>
-              <label htmlFor={`add-${session.id}`}>Übung hinzufügen</label>
-              <input className="input" id={`add-${session.id}`} name="name" placeholder="Übung wählen/eingeben" list="exercise-names" required />
-            </div>
-            <button type="submit" className="btn secondary sm">+ Übung</button>
-          </form>
+          <ExercisePicker sessionId={session.id} existingNames={exerciseNames} />
 
           <SessionNote sessionId={session.id} note={session.note} />
 
@@ -471,6 +467,8 @@ function FortschrittTab({
 
   return (
     <>
+      <p className="neka-empty">Auswertung der zuletzt geladenen Trainings (maximal 150). Nur abgeschlossene Einheiten zählen.</p>
+      <TrainingOverview sessions={doneSessions} today={localDateKey()} />
       <TrainingProgress sessions={doneSessions} />
       <div className="card">
         <span className="habit-section-label">BESTLEISTUNGEN</span>
