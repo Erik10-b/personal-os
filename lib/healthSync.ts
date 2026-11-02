@@ -10,7 +10,7 @@ export type HealthSnapshot = {
 /** Snapshots replace daily totals; missing values never mean zero. */
 export function validateHealthSnapshot(value: unknown, now = new Date()): HealthSnapshot {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("JSON-Objekt erwartet.");
-  const p = value as Record<string, unknown>;
+  const p = { ...value } as Record<string, unknown>;
   const allowed = ["date", "observed_at", "source", "steps", "active_kcal", "weight_kg"];
   if (Object.keys(p).some(key => !allowed.includes(key))) throw new Error("Unbekanntes Feld im Health-Import.");
   if (typeof p.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(p.date)) throw new Error("Datum muss yyyy-MM-dd sein.");
@@ -25,8 +25,16 @@ export function validateHealthSnapshot(value: unknown, now = new Date()): Health
   let count = 0;
   for (const key of Object.keys(ranges) as (keyof typeof ranges)[]) {
     if (p[key] === undefined) continue;
+    // Shortcuts can serialize a numeric variable as a JSON string.
+    // Accept only unambiguous digit-only step totals, never lists, units or blanks.
+    if (key === "steps" && typeof p[key] === "string" && /^[0-9]+$/.test(p[key].trim())) {
+      p[key] = Number(p[key].trim());
+    }
     const n = p[key];
-    if (typeof n !== "number" || !Number.isFinite(n) || n < ranges[key][0] || n > ranges[key][1] || (key === "steps" && !Number.isInteger(n))) throw new Error(`Ungültiger Wert für ${key}. Zahlen ohne Einheit senden.`);
+    if (typeof n !== "number" || !Number.isFinite(n) || n < ranges[key][0] || n > ranges[key][1] || (key === "steps" && !Number.isInteger(n))) {
+      const kind = n === null ? "leer (null)" : Array.isArray(n) ? "Liste" : typeof n === "string" ? "Text" : typeof n === "object" ? "Objekt" : typeof n === "number" ? "Zahl außerhalb des erlaubten Bereichs oder mit Nachkommastellen" : "kein Zahlenwert";
+      throw new Error(`Ungültiger Wert für ${key}: ${kind}. ${key === "steps" ? "Eine einzelne ganze Zahl zwischen 0 und 200000 ohne Einheit oder Tausendertrennzeichen senden." : "Zahlen ohne Einheit im erlaubten Bereich senden."}`);
+    }
     count++;
   }
   if (!count) throw new Error("Mindestens ein Health-Wert ist erforderlich.");
