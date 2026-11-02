@@ -1,3 +1,4 @@
+import "../health.css";
 
 import { PageTransition } from "@/components/nav/PageTransition";
 import { SideNav } from "@/components/nav/SideNav";

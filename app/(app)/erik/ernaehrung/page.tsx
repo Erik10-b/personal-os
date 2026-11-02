@@ -64,6 +64,8 @@ export default async function ErnaehrungPage({
 
       <NutritionTargets totals={totals} goals={goals} configured={configured} />
 
+      <Link href="/erik/health" className="health-shortcut-link"><span><strong>Apple Health verbinden</strong><small>Schritte, Aktivitätsenergie und Gewicht per iPhone-Kurzbefehl</small></span><span aria-hidden="true">↗</span></Link>
+
       <MealLibrary templates={library.templates} date={activeDate} previousMeals={previousMeals} storageReady={library.storageReady} />
 
       <details className="meal-manual"><summary>Einmalige Mahlzeit manuell eintragen</summary>

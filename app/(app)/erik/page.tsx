@@ -60,6 +60,8 @@ export default async function ErikPage() {
         </div>
       </div>
 
+      <Link href="/erik/health" className="health-shortcut-link"><span><strong>Apple Health verbinden</strong><small>Schritte, Aktivitätsenergie und Gewicht per iPhone-Kurzbefehl</small></span><span aria-hidden="true">↗</span></Link>
+
       {/* ===== Habits ===== */}
       <SectionHead title="Habits" linkHref="/erik/habits" linkLabel="Analytics-Dashboard →" />
       <form action={createHabit} style={{ display: "flex", gap: "var(--space-2)", marginBottom: "var(--space-6)" }}>
