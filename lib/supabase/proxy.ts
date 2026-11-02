@@ -4,6 +4,9 @@ import { NextResponse, type NextRequest } from "next/server";
 const PUBLIC_PATHS = ["/login", "/strichliste", "/padel"];
 
 export async function updateSession(request: NextRequest) {
+  // The Shortcut endpoint verifies its own write-only bearer token.
+  if (request.nextUrl.pathname === "/api/health/sync") return NextResponse.next({ request });
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
