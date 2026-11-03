@@ -19,12 +19,23 @@ test('rejects invalid dates, stale/future observations, units, foreign user IDs 
   for (const patch of [
     { date: '2026-02-30' }, { date: '2026-09-01' }, { date: '2026-11-04' },
     { observed_at: '2026-11-02T12:00:00' }, { observed_at: '2026-11-02T13:00:00Z' },
-    { steps: '5000' }, { steps: 2.5 }, { steps: -1 }, { steps: 200001 }, { steps: null },
+    { steps: 2.5 }, { steps: -1 }, { steps: 200001 }, { steps: null },
     { active_kcal: NaN }, { active_kcal: Infinity }, { weight_kg: 0 }, { weight_kg: 401 },
     { user_id: 'someone-else' }, { source: ' ' }, { source: 'a'.repeat(121) },
   ]) assert.throws(() => validateHealthSnapshot({ ...valid, ...patch }, now), JSON.stringify(patch));
   const empty = { ...valid }; delete empty.steps;
   assert.throws(() => validateHealthSnapshot(empty, now));
+});
+test('normalizes Shortcuts digit strings without mutating input or coercing empty/structured values', () => {
+  for (const value of ['6233', ' 6233 ', '0', '200000']) {
+    const input = { ...valid, steps: value };
+    assert.equal(validateHealthSnapshot(input, now).steps, Number(value));
+    assert.equal(input.steps, value);
+  }
+  for (const value of ['', ' ', '6.233', '6,233', '6233 Schritte', '6e3', '0x10', '200001', '-1', '1.5', [6233], { value: 6233 }, true, null]) {
+    assert.throws(() => validateHealthSnapshot({ ...valid, steps: value }, now));
+  }
+  assert.throws(() => validateHealthSnapshot({ ...valid, steps: [6233] }, now), /Liste/);
 });
 test('bounded body reader rejects oversized streamed bodies without Content-Length', async () => {
   const request = new Request('https://example.test', { method: 'POST', body: JSON.stringify(valid) });
@@ -36,10 +47,11 @@ test('bounded body reader rejects oversized streamed bodies without Content-Leng
 // Route tests use a fake DB: auth/validation failures must never call it.
 const routeExports = {};
 let rpcCalls = 0;
+let rpcArgs;
 let rpcResult = { data: 'updated', error: null };
 new Function('require', 'exports', ts.transpileModule(fs.readFileSync(new URL('../app/api/health/sync/route.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText)(name => {
   if (name === '@/lib/healthSync') return exports;
-  if (name === '@supabase/supabase-js') return { createClient: () => ({ rpc: async () => { rpcCalls++; return rpcResult; } }) };
+  if (name === '@supabase/supabase-js') return { createClient: () => ({ rpc: async (_name, args) => { rpcArgs = args; rpcCalls++; return rpcResult; } }) };
   throw new Error(name);
 }, routeExports);
 const token = 'a'.repeat(64);
@@ -60,6 +72,8 @@ test('route rejects unauthenticated/invalid requests before touching database an
   assert.equal(response.status, 200);
   assert.equal(response.headers.get('cache-control'), 'no-store');
   assert.equal((await response.json()).ok, true);
+  assert.equal((await send(headers, JSON.stringify({ ...current, steps: '6233' }))).status, 200);
+  assert.equal(rpcArgs.p_steps, 6233);
   rpcResult = { data: null, error: { code: '28000', message: 'SECRET' } };
   assert.equal((await send(headers, JSON.stringify(current))).status, 401);
   rpcResult = { data: null, error: { code: 'PGRST202', message: 'SECRET' } };
